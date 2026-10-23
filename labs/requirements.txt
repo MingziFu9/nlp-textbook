@@ -1,0 +1,24 @@
+# 《自然语言处理导论》实验环境（教材编写时实测通过的版本，Python 3.11）
+# 安装：pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+jieba==0.42.1
+nltk==3.10.4
+spacy==3.8.16
+scikit-learn==1.9.1
+torch==2.14.1
+transformers==5.20.2
+datasets==5.1.0
+accelerate
+peft==0.21.2
+sentence-transformers==6.2.0
+pandas==3.1.0
+numpy==2.4.6
+matplotlib==3.11.2
+gensim==4.4.0
+networkx==3.6.1
+wordcloud==1.9.6
+opencc==1.4.2
+gradio==6.30.0
+openai==3.36.1
+dashscope==2.0.1
+sentencepiece
+jupyter

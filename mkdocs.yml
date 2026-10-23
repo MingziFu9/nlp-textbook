@@ -1,0 +1,48 @@
+site_name: 自然语言处理导论
+site_description: 面向成人教育人工智能技术应用专业专科学生的 NLP 入门教材，每章配套动手实验
+docs_dir: docs
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - tables
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+nav:
+  - 首页: index.md
+  - 课程描述: course-description.md
+  - "第 1 章 自然语言处理概述": chapters/01-intro/index.md
+  - "第 2 章 文本预处理": chapters/02-preprocessing/index.md
+  - "第 3 章 词法分析：分词、词性与大模型分词器": chapters/03-lexical/index.md
+  - "第 4 章 句法分析与语义分析": chapters/04-syntax/index.md
+  - "第 5 章 文本表示：从词袋到文本嵌入": chapters/05-representation/index.md
+  - "第 6 章 文本分类与情感分析": chapters/06-classification/index.md
+  - "第 7 章 命名实体识别与信息抽取": chapters/07-ner/index.md
+  - "第 8 章 深度学习基础：神经网络、RNN 与 LSTM": chapters/08-deep-learning/index.md
+  - "第 9 章 Transformer 与预训练大模型": chapters/09-transformer/index.md
+  - "第 10 章 机器翻译与文本生成": chapters/10-generation/index.md
+  - "第 11 章 问答系统、RAG 与智能体": chapters/11-qa-rag-agent/index.md
+  - "第 12 章 NLP 的伦理、安全与法律": chapters/12-ethics/index.md
+  - 附录:
+    - "附录 A Python 速查": appendix/a-python.md
+    - "附录 B NLP 工具库接口速查": appendix/b-libraries.md
+    - "附录 C 实验环境、模型与数据说明": appendix/c-environment.md
+    - "附录 D 国产大模型 API 申请与使用指南": appendix/d-llm-api.md
+    - "附录 E 术语表": appendix/e-glossary.md
