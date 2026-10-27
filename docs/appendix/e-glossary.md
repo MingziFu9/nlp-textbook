@@ -257,29 +257,31 @@ description: 本书主要术语的中英文名称与简明定义，按章节顺�
 
 ## 第 11 章 问答系统、RAG 与智能体
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-问答系统"></span>问答系统 | Question Answering, QA | 理解自然语言问题并直接给出答案的系统 |
-| <span id="g-知识图谱问答"></span>知识图谱问答 | Knowledge Base Question Answering, KBQA | 把问题转换为知识图谱查询来获取答案 |
-| <span id="g-机器阅读理解"></span>机器阅读理解 | Machine Reading Comprehension, MRC | 根据给定文章回答问题，抽取式阅读理解预测答案的起止位置 |
-| <span id="g-应用程序编程接口"></span>应用程序编程接口 | Application Programming Interface, API | 程序之间相互调用的约定；大模型 API 让程序通过网络调用模型 |
-| <span id="g-系统提示"></span>系统提示 | System Prompt | 设定模型身份、规则和风格的消息，对整个对话生效 |
-| <span id="g-上下文长度"></span>上下文长度 | Context Length | 模型一次能处理的最大 Token 数 |
-| <span id="g-提示词-提示工程"></span>提示词 / 提示工程 | Prompt / Prompt Engineering | 给模型的指令和输入 / 设计和优化提示词的方法 |
-| <span id="g-少样本提示"></span>少样本提示 | Few-shot Prompting | 在提示中给出几个输入输出示例的方法 |
-| <span id="g-思维链"></span>思维链 | Chain of Thought, CoT | 让模型先写出推理步骤再给出答案的方法 |
-| <span id="g-检索增强生成"></span>检索增强生成 | Retrieval-Augmented Generation, RAG | 先检索相关资料，再让大模型基于资料生成回答的技术 |
-| <span id="g-切块"></span>切块 | Chunking | 把长文档切分为适合检索的片段 |
-| <span id="g-BM25"></span>BM25 | BM25 | 考虑词频饱和与文档长度的关键词检索打分算法 |
-| <span id="g-向量检索"></span>向量检索 | Vector Retrieval | 基于文本嵌入向量相似度的检索 |
-| <span id="g-向量数据库"></span>向量数据库 | Vector Database | 专门存储向量并支持快速相似度检索的数据库 |
-| <span id="g-混合检索"></span>混合检索 | Hybrid Retrieval | 结合关键词检索和向量检索的检索方式 |
-| <span id="g-重排序"></span>重排序 | Reranking | 用更精确的模型对初步检索结果重新排序 |
-| <span id="g-智能体"></span>智能体 | AI Agent | 以大模型为核心、能规划步骤、调用工具、自主完成任务的系统 |
-| <span id="g-函数调用"></span>函数调用 | Function Calling / Tool Calling | 模型输出结构化的工具调用请求、由程序执行并返回结果的机制 |
-| <span id="g-ReAct"></span>ReAct | Reasoning and Acting | 让模型循环进行“思考—行动—观察”的智能体方法 |
-| <span id="g-模型上下文协议"></span>模型上下文协议 | Model Context Protocol, MCP | 大模型应用连接外部工具和数据源的开放标准接口 |
-| <span id="g-工作流"></span>工作流 | Workflow | 预先设计好的、由多个步骤组成的处理流程 |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-问答系统"></span>问答系统 | Question Answering, QA | 理解自然语言问题并直接给出答案的系统 | 问“珠穆朗玛峰有多高”，直接回答 8848.86 米 |
+| <span id="g-FAQ-问答"></span>FAQ 问答 | FAQ-based QA | 找到与用户问题最相似的已有问题，返回其事先审核好的答案 | 银行客服知识库 |
+| <span id="g-知识图谱问答"></span>知识图谱问答 | Knowledge Base Question Answering, KBQA | 把问题转换为知识图谱查询来获取答案 | “星海科技的董事长是谁？”→ 查（？，董事长，星海科技） |
+| <span id="g-机器阅读理解"></span>机器阅读理解 | Machine Reading Comprehension, MRC | 根据给定文章回答问题，抽取式阅读理解预测答案的起止位置 | 从手册中找出“下学期开学第 2 周” |
+| <span id="g-检索器-阅读器"></span>检索器 / 阅读器 | Retriever / Reader | 两阶段问答框架中，先从大量文档中找出相关段落，再从中定位答案 | RAG 把阅读器换成了大模型 |
+| <span id="g-应用程序编程接口"></span>应用程序编程接口 | Application Programming Interface, API | 程序之间相互调用的约定；大模型 API 让程序通过网络调用模型 | 修改 base_url、api_key、model 即可换一家厂商 |
+| <span id="g-系统提示"></span>系统提示 | System Prompt | 设定模型身份、规则和风格的消息，对整个对话生效 | “你是一名耐心的计算机老师，回答通俗易懂。” |
+| <span id="g-上下文长度"></span>上下文长度 | Context Length | 模型一次能处理的最大 Token 数 | 对话历史越长，越接近上下文上限 |
+| <span id="g-提示词-提示工程"></span>提示词 / 提示工程 | Prompt / Prompt Engineering | 给模型的指令和输入 / 设计和优化提示词的方法 | 写清角色、任务、背景、要求、格式、示例 |
+| <span id="g-零样本提示"></span>零样本提示 | Zero-shot Prompting | 只描述任务、不给任何示例的提示方法 | “判断下面这条评论是好评还是差评” |
+| <span id="g-少样本提示"></span>少样本提示 | Few-shot Prompting | 在提示中给出几个输入输出示例的方法 | “留言：快递还没到 → 物流” |
+| <span id="g-思维链"></span>思维链 | Chain of Thought, CoT | 让模型先写出推理步骤再给出答案的方法 | “请一步一步地思考” |
+| <span id="g-检索增强生成"></span>检索增强生成 | Retrieval-Augmented Generation, RAG | 先检索相关资料，再让大模型基于资料生成回答的技术 | 学生手册问答助手 |
+| <span id="g-切块"></span>切块 | Chunking | 把长文档切分为适合检索的片段 | 每 300–500 字一块，相邻块重叠 50–100 字 |
+| <span id="g-元数据"></span>元数据 | Metadata | 附在片段上的文档名、章节、页码、更新日期等信息 | 回答末尾注明“依据：第六章” |
+| <span id="g-向量检索"></span>向量检索 | Vector Retrieval | 基于文本嵌入向量相似度的检索 | 用“挂科了怎么办”找到“考试不及格”的规定 |
+| <span id="g-重排序"></span>重排序 | Reranking | 用更精确的模型对初步检索结果重新排序 | 先召回 30 个片段，再精排出前 3 个 |
+| <span id="g-智能体"></span>智能体 | AI Agent | 以大模型为核心、能规划步骤、调用工具、自主完成任务的系统 | 自动查订单、办退款的客服 |
+| <span id="g-函数调用"></span>函数调用 | Function Calling / Tool Calling | 模型输出结构化的工具调用请求、由程序执行并返回结果的机制 | 模型请求 calculator("3000+1000")，程序返回 4000 |
+| <span id="g-ReAct"></span>ReAct | Reasoning and Acting | 让模型循环进行“思考—行动—观察”的智能体方法 | 先查今天星期几，再查图书馆几点关门 |
+| <span id="g-模型上下文协议"></span>模型上下文协议 | Model Context Protocol, MCP | 大模型应用连接外部工具和数据源的开放标准接口 | 像 USB 接口一样，一个工具接一次、到处能用 |
+| <span id="g-工作流"></span>工作流 | Workflow | 预先设计好的、由多个步骤组成的处理流程 | 识别意图 → 检索知识库 → 生成回答 → 人工审核 |
+| <span id="g-最小权限"></span>最小权限 | Principle of Least Privilege | 只给智能体完成任务所必需的工具和权限 | 查询订单的智能体不给删除订单的权限 |
 
 ## 第 12 章 NLP 的伦理、安全与法律
 
