@@ -195,36 +195,38 @@ description: 本书主要术语的中英文名称与简明定义，按章节顺�
 
 ## 第 9 章 Transformer 与预训练大模型
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-注意力机制"></span>注意力机制 | Attention Mechanism | 根据相关程度为不同位置的信息分配权重并加权求和的机制 |
-| <span id="g-自注意力"></span>自注意力 | Self-Attention | 序列中每个位置关注同一序列所有位置的注意力 |
-| <span id="g-查询-键-值"></span>查询 / 键 / 值 | Query / Key / Value | 自注意力中分别用于发起匹配、被匹配和提供内容的三个向量 |
-| <span id="g-多头注意力"></span>多头注意力 | Multi-Head Attention | 并行使用多组 Q、K、V 投影，从多个角度计算注意力 |
-| <span id="g-Transformer"></span>Transformer | Transformer | 以自注意力为核心、可并行计算的神经网络架构，2017 年提出 |
-| <span id="g-编码器-解码器"></span>编码器 / 解码器 | Encoder / Decoder | 分别负责理解输入和逐步生成输出的网络部分 |
-| <span id="g-位置编码"></span>位置编码 | Positional Encoding | 为输入加入位置信息，弥补自注意力不感知词序的缺陷 |
-| <span id="g-旋转位置编码"></span>旋转位置编码 | Rotary Position Embedding, RoPE | 通过旋转 Q、K 向量表示相对位置的编码方法，大模型普遍采用 |
-| <span id="g-残差连接"></span>残差连接 | Residual Connection | 把层的输入直接加到输出上，使深层网络易于训练 |
-| <span id="g-层归一化"></span>层归一化 | Layer Normalization | 把每个向量的数值调整到稳定范围，使训练更稳定 |
-| <span id="g-因果掩码"></span>因果掩码 | Causal Mask | 使每个位置只能看到其左侧内容的注意力掩码 |
-| <span id="g-预训练"></span>预训练 | Pre-training | 在大规模通用数据上训练模型，学习一般语言规律和知识 |
-| <span id="g-微调"></span>微调 | Fine-tuning | 在预训练模型基础上用任务数据继续训练 |
-| <span id="g-自监督学习"></span>自监督学习 | Self-supervised Learning | 从数据本身构造训练目标、无需人工标注的学习方式 |
-| <span id="g-掩码语言模型"></span>掩码语言模型 | Masked Language Model, MLM | 遮住部分词让模型预测的预训练任务（BERT） |
-| <span id="g-BERT"></span>BERT | Bidirectional Encoder Representations from Transformers | 基于 Transformer 编码器、用掩码语言模型预训练的模型 |
-| <span id="g-GPT"></span>GPT | Generative Pre-trained Transformer | 基于 Transformer 解码器、以预测下一个词为预训练任务的生成式模型 |
-| <span id="g-规模定律"></span>规模定律 | Scaling Law | 模型效果随参数量、数据量、计算量增加而可预测地提升的规律 |
-| <span id="g-指令微调"></span>指令微调 | Supervised Fine-Tuning, SFT | 用“指令-回答”数据微调，使模型能遵循人类指令 |
-| <span id="g-人类反馈强化学习"></span>人类反馈强化学习 | Reinforcement Learning from Human Feedback, RLHF | 利用人类对回答的偏好训练模型，使其更有帮助、更安全 |
-| <span id="g-推理模型"></span>推理模型 | Reasoning Model | 回答前先生成长思维链进行推理的大模型 |
-| <span id="g-混合专家模型"></span>混合专家模型 | Mixture of Experts, MoE | 由路由器为每个 Token 选择少数专家网络计算的模型结构 |
-| <span id="g-基座模型"></span>基座模型 | Base Model | 只经过预训练、尚未进行指令微调的模型 |
-| <span id="g-开放权重模型"></span>开放权重模型 | Open-weight Model | 公开模型参数、允许下载和本地运行的模型 |
-| <span id="g-量化"></span>量化 | Quantization | 用更少的比特存储模型参数，以降低内存和计算需求 |
-| <span id="g-幻觉"></span>幻觉 | Hallucination | 模型生成看似合理但与事实不符或无中生有的内容 |
-| <span id="g-参数高效微调"></span>参数高效微调 | Parameter-Efficient Fine-Tuning, PEFT | 冻结大部分参数、只训练少量参数的微调方法 |
-| <span id="g-低秩适配"></span>低秩适配 | Low-Rank Adaptation, LoRA | 用两个低秩矩阵的乘积近似参数变化量的参数高效微调方法 |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-注意力机制"></span>注意力机制 | Attention Mechanism | 根据相关程度为不同位置的信息分配权重并加权求和的机制 | 译出 natural 时主要看原文的“自然” |
+| <span id="g-自注意力"></span>自注意力 | Self-Attention | 序列中每个位置关注同一序列所有位置的注意力 | 计算“它”的表示时重点关注“小猫” |
+| <span id="g-查询-键-值"></span>查询 / 键 / 值 | Query / Key / Value | 自注意力中分别用于发起匹配、被匹配和提供内容的三个向量 | 图书馆里的问题、书名关键词、书的内容 |
+| <span id="g-多头注意力"></span>多头注意力 | Multi-Head Attention | 并行使用多组 Q、K、V 投影，从多个角度计算注意力 | BERT-base 每层 12 个头，有的关注相邻词，有的关注指代 |
+| <span id="g-Transformer"></span>Transformer | Transformer | 以自注意力为核心、可并行计算的神经网络架构，2017 年提出 | GPT、BERT、Qwen、DeepSeek 都基于它 |
+| <span id="g-编码器-解码器"></span>编码器 / 解码器 | Encoder / Decoder | 分别负责理解输入和逐步生成输出的网络部分 | 翻译时编码器读中文，解码器逐词写英文 |
+| <span id="g-位置编码"></span>位置编码 | Positional Encoding | 为输入加入位置信息，弥补自注意力不感知词序的缺陷 | 让模型区分“狗咬人”和“人咬狗” |
+| <span id="g-旋转位置编码"></span>旋转位置编码 | Rotary Position Embedding, RoPE | 通过旋转 Q、K 向量表示相对位置的编码方法，大模型普遍采用 | Llama、Qwen、DeepSeek 都使用 RoPE |
+| <span id="g-前馈神经网络"></span>前馈神经网络 | Feed-Forward Network, FFN | Transformer 每层中对每个词单独做“深加工”的两层全连接网络 | “北京是中国的首都”这类知识大多存在这里 |
+| <span id="g-残差连接"></span>残差连接 | Residual Connection | 把层的输入直接加到输出上，使深层网络易于训练 | 输出 = x + 子层(x) |
+| <span id="g-层归一化"></span>层归一化 | Layer Normalization | 把每个向量的数值调整到稳定范围，使训练更稳定 | 把向量调整到均值为 0、方差为 1 附近 |
+| <span id="g-因果掩码"></span>因果掩码 | Causal Mask | 使每个位置只能看到其左侧内容的注意力掩码 | 预测第 3 个词时只能看第 1、2 个词 |
+| <span id="g-预训练"></span>预训练 | Pre-training | 在大规模通用数据上训练模型，学习一般语言规律和知识 | 在数万亿 Token 的网页、书籍上预测下一个词 |
+| <span id="g-微调"></span>微调 | Fine-tuning | 在预训练模型基础上用任务数据继续训练 | 用 1 万条外卖评论把中文 BERT 调成情感分类器 |
+| <span id="g-掩码语言模型"></span>掩码语言模型 | Masked Language Model, MLM | 遮住部分词让模型预测的预训练任务（BERT） | 今天天气很[MASK] → 好 |
+| <span id="g-BERT"></span>BERT | Bidirectional Encoder Representations from Transformers | 基于 Transformer 编码器、用掩码语言模型预训练的模型 | chinese-roberta-wwm-ext、rbt3 |
+| <span id="g-GPT"></span>GPT | Generative Pre-trained Transformer | 基于 Transformer 解码器、以预测下一个词为预训练任务的生成式模型 | 床前明月 → 光 |
+| <span id="g-规模定律"></span>规模定律 | Scaling Law | 模型效果随参数量、数据量、计算量增加而可预测地提升的规律 | GPT-1 的 1.17 亿参数到 GPT-3 的 1750 亿参数 |
+| <span id="g-涌现能力"></span>涌现能力 | Emergent Abilities | 模型规模达到一定程度后才表现出来的能力 | 多步推理、写代码 |
+| <span id="g-指令微调"></span>指令微调 | Supervised Fine-Tuning, SFT | 用“指令-回答”数据微调，使模型能遵循人类指令 | “请把下面这段话翻译成英文”→ 给出译文 |
+| <span id="g-人类反馈强化学习"></span>人类反馈强化学习 | Reinforcement Learning from Human Feedback, RLHF | 利用人类对回答的偏好训练模型，使其更有帮助、更安全 | 人对两个回答排序，模型学着写出更好的那种 |
+| <span id="g-推理模型"></span>推理模型 | Reasoning Model | 回答前先生成长思维链进行推理的大模型 | OpenAI o1、DeepSeek-R1 |
+| <span id="g-混合专家模型"></span>混合专家模型 | Mixture of Experts, MoE | 由路由器为每个 Token 选择少数专家网络计算的模型结构 | DeepSeek-V3 总参数 6710 亿，每个 Token 激活约 370 亿 |
+| <span id="g-基座模型"></span>基座模型 | Base Model | 只经过预训练、尚未进行指令微调的模型 | 问它“中国的首都是哪里？”可能接着续写更多问题 |
+| <span id="g-开放权重模型"></span>开放权重模型 | Open-weight Model | 公开模型参数、允许下载和本地运行的模型 | Qwen、DeepSeek 可在魔搭社区下载 |
+| <span id="g-量化"></span>量化 | Quantization | 用更少的比特存储模型参数，以降低内存和计算需求 | 7B 模型从 16 位（约 14 GB）量化到 4 位（约 3.5 GB） |
+| <span id="g-幻觉"></span>幻觉 | Hallucination | 模型生成看似合理但与事实不符或无中生有的内容 | 编造一篇并不存在的论文 |
+| <span id="g-参数高效微调"></span>参数高效微调 | Parameter-Efficient Fine-Tuning, PEFT | 冻结大部分参数、只训练少量参数的微调方法 | LoRA、QLoRA |
+| <span id="g-低秩适配"></span>低秩适配 | Low-Rank Adaptation, LoRA | 用两个低秩矩阵的乘积近似参数变化量的参数高效微调方法 | r = 8 时只训练原矩阵约 1.6% 的参数 |
+| <span id="g-模型卡片"></span>模型卡片 | Model Card | 说明模型用途、训练数据、使用方法、许可证和局限的文档 | Hugging Face 每个模型页面上的说明 |
 
 ## 第 10 章 机器翻译与文本生成
 
