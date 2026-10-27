@@ -230,28 +230,30 @@ description: 本书主要术语的中英文名称与简明定义，按章节顺�
 
 ## 第 10 章 机器翻译与文本生成
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-机器翻译"></span>机器翻译 | Machine Translation, MT | 用计算机把一种自然语言自动转换为另一种自然语言 |
-| <span id="g-平行语料"></span>平行语料 | Parallel Corpus | 原文与译文逐句对应的双语语料 |
-| <span id="g-统计机器翻译"></span>统计机器翻译 | Statistical Machine Translation, SMT | 从平行语料中统计翻译规律，结合翻译模型与语言模型的翻译方法 |
-| <span id="g-词对齐"></span>词对齐 | Word Alignment | 找出双语句子中相互对应的词 |
-| <span id="g-神经机器翻译"></span>神经机器翻译 | Neural Machine Translation, NMT | 用编码器-解码器神经网络端到端完成翻译 |
-| <span id="g-序列到序列模型"></span>序列到序列模型 | Sequence-to-Sequence, Seq2Seq | 把一个序列转换为另一个序列的编码器-解码器模型 |
-| <span id="g-回译"></span>回译 | Back-Translation | 用反向翻译模型把目标语言单语数据译回源语言，生成伪平行数据 |
-| <span id="g-译后编辑"></span>译后编辑 | Post-Editing | 人工修改机器翻译初稿的工作方式 |
-| <span id="g-BLEU"></span>BLEU | Bilingual Evaluation Understudy | 基于 n 元精确率和简短惩罚的机器翻译自动评价指标 |
-| <span id="g-文本生成"></span>文本生成 | Text Generation | 由计算机自动产生自然语言文本 |
-| <span id="g-自回归生成"></span>自回归生成 | Autoregressive Generation | 把已生成内容作为输入、逐个生成下一个 Token 的方式 |
-| <span id="g-解码策略"></span>解码策略 | Decoding Strategy | 根据模型输出的概率分布选择下一个词的方法 |
-| <span id="g-贪心搜索"></span>贪心搜索 | Greedy Search | 每一步选择概率最大的词的解码方法 |
-| <span id="g-束搜索"></span>束搜索 | Beam Search | 每一步保留概率最高的若干候选序列的解码方法 |
-| <span id="g-温度"></span>温度 | Temperature | 调节概率分布尖锐程度、从而控制生成随机性的参数 |
-| <span id="g-Top-k-Top-p-采样"></span>Top-k / Top-p 采样 | Top-k / Top-p (Nucleus) Sampling | 只在概率最高的 k 个词 / 累计概率达到 p 的词中采样 |
-| <span id="g-文本摘要"></span>文本摘要 | Text Summarization | 把长文本浓缩为保留主要信息的短文本，分抽取式和生成式 |
-| <span id="g-TextRank"></span>TextRank | TextRank | 借鉴 PageRank、基于句子（或词）相似度图进行排序的摘要与关键词提取算法 |
-| <span id="g-ROUGE"></span>ROUGE | Recall-Oriented Understudy for Gisting Evaluation | 以召回率为主的摘要自动评价指标 |
-| <span id="g-深度合成"></span>深度合成 | Deep Synthesis | 利用深度学习等技术生成或编辑文本、图像、音频、视频的技术 |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-机器翻译"></span>机器翻译 | Machine Translation, MT | 用计算机把一种自然语言自动转换为另一种自然语言 | 把“我爱自然语言处理”译成 I love natural language processing |
+| <span id="g-平行语料"></span>平行语料 | Parallel Corpus | 原文与译文逐句对应的双语语料 | 联合国文件的中英文对照版本 |
+| <span id="g-统计机器翻译"></span>统计机器翻译 | Statistical Machine Translation, SMT | 从平行语料中统计翻译规律，结合翻译模型与语言模型的翻译方法 | 翻译模型管“信”，语言模型管“达” |
+| <span id="g-词对齐"></span>词对齐 | Word Alignment | 找出双语句子中相互对应的词 | “爱”对应 love，“处理”对应 processing |
+| <span id="g-神经机器翻译"></span>神经机器翻译 | Neural Machine Translation, NMT | 用编码器-解码器神经网络端到端完成翻译 | 2016 年谷歌神经机器翻译系统 |
+| <span id="g-序列到序列模型"></span>序列到序列模型 | Sequence-to-Sequence, Seq2Seq | 把一个序列转换为另一个序列的编码器-解码器模型 | 中文句子 → 英文句子；长文章 → 摘要 |
+| <span id="g-回译"></span>回译 | Back-Translation | 用反向翻译模型把目标语言单语数据译回源语言，生成伪平行数据 | 把大量英文新闻译成中文，得到“中文→英文”训练数据 |
+| <span id="g-译后编辑"></span>译后编辑 | Post-Editing | 人工修改机器翻译初稿的工作方式 | 合同先机翻，再由译员逐句修改 |
+| <span id="g-忠实度-流利度"></span>忠实度 / 流利度 | Adequacy / Fluency | 人工评价译文的两个维度：意思是否准确完整、表达是否通顺自然 | 各打 1–5 分 |
+| <span id="g-BLEU"></span>BLEU | Bilingual Evaluation Understudy | 基于 n 元精确率和简短惩罚的机器翻译自动评价指标 | BLEU 在 30 以上的译文基本可以理解 |
+| <span id="g-简短惩罚"></span>简短惩罚 | Brevity Penalty, BP | 译文比参考译文短时给 BLEU 打折的系数 | c = 8、r = 10 时 BP ≈ 0.78 |
+| <span id="g-文本生成"></span>文本生成 | Text Generation | 由计算机自动产生自然语言文本 | 写摘要、写周报、写广告语 |
+| <span id="g-自回归生成"></span>自回归生成 | Autoregressive Generation | 把已生成内容作为输入、逐个生成下一个 Token 的方式 | 今天天气 → 很 → 今天天气很 → 好 |
+| <span id="g-解码策略"></span>解码策略 | Decoding Strategy | 根据模型输出的概率分布选择下一个词的方法 | 贪心、束搜索、温度采样、Top-p |
+| <span id="g-贪心搜索"></span>贪心搜索 | Greedy Search | 每一步选择概率最大的词的解码方法 | 容易反复写出“味道不错，味道不错” |
+| <span id="g-束搜索"></span>束搜索 | Beam Search | 每一步保留概率最高的若干候选序列的解码方法 | 束宽为 4 时每步保留 4 条候选译文 |
+| <span id="g-温度"></span>温度 | Temperature | 调节概率分布尖锐程度、从而控制生成随机性的参数 | 翻译设 0–0.3，写广告语设 0.7–1.0 |
+| <span id="g-Top-k-Top-p-采样"></span>Top-k / Top-p 采样 | Top-k / Top-p (Nucleus) Sampling | 只在概率最高的 k 个词 / 累计概率达到 p 的词中采样 | 概率 0.5、0.3、0.1… p = 0.9 时只在前 3 个词中抽 |
+| <span id="g-文本摘要"></span>文本摘要 | Text Summarization | 把长文本浓缩为保留主要信息的短文本，分抽取式和生成式 | 把一篇 3000 字的新闻压缩成 3 句话 |
+| <span id="g-TextRank"></span>TextRank | TextRank | 借鉴 PageRank、基于句子（或词）相似度图进行排序的摘要与关键词提取算法 | `jieba.analyse.textrank()` 提取关键词 |
+| <span id="g-ROUGE"></span>ROUGE | Recall-Oriented Understudy for Gisting Evaluation | 以召回率为主的摘要自动评价指标 | ROUGE-1、ROUGE-2、ROUGE-L |
+| <span id="g-深度合成"></span>深度合成 | Deep Synthesis | 利用深度学习等技术生成或编辑文本、图像、音频、视频的技术 | AI 换脸、AI 配音、AI 写作 |
 
 ## 第 11 章 问答系统、RAG 与智能体
 
