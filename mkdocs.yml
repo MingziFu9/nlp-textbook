@@ -67,6 +67,7 @@ nav:
     - "RAG 切块实验": sims/rag-chunking/index.md
     - "ReAct 执行回放": sims/react-replay/index.md
     - "脱敏与提示注入攻防": sims/privacy-injection/index.md
+  - 学习图谱: learning-graph/index.md
   - 附录:
     - "附录 A Python 速查": appendix/a-python.md
     - "附录 B NLP 工具库接口速查": appendix/b-libraries.md
