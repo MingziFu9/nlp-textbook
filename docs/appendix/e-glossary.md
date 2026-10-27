@@ -9,61 +9,74 @@ description: 本书主要术语的中英文名称与简明定义，按章节顺�
 
 ## 第 1 章 自然语言处理概述
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-自然语言"></span>自然语言 | Natural Language | 人类在日常交流中自然形成和使用的语言，如汉语、英语，区别于编程语言等人工语言 |
-| <span id="g-自然语言处理"></span>自然语言处理 | Natural Language Processing, NLP | 研究让计算机理解、处理和生成人类语言的理论与技术 |
-| <span id="g-自然语言理解"></span>自然语言理解 | Natural Language Understanding, NLU | 让计算机读懂语言含义的技术，如分类、抽取、问答 |
-| <span id="g-自然语言生成"></span>自然语言生成 | Natural Language Generation, NLG | 让计算机产生自然语言文本的技术，如翻译、摘要、写作 |
-| <span id="g-歧义"></span>歧义 | Ambiguity | 同一个语言表达可以有多种理解的现象，是 NLP 的核心难点 |
-| <span id="g-语料库"></span>语料库 | Corpus | 为语言研究和模型训练而收集、整理的大规模文本集合 |
-| <span id="g-大语言模型"></span>大语言模型 | Large Language Model, LLM | 参数规模巨大、在海量文本上预训练、具有通用语言理解与生成能力的模型 |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-自然语言"></span>自然语言 | Natural Language | 人类在日常交流中自然形成和使用的语言，如汉语、英语，区别于编程语言等人工语言 | 微信聊天、新闻稿、客户评论都是自然语言；Python 代码不是 |
+| <span id="g-自然语言处理"></span>自然语言处理 | Natural Language Processing, NLP | 研究让计算机理解、处理和生成人类语言的理论与技术 | 机器翻译、智能客服、垃圾短信识别 |
+| <span id="g-自然语言理解"></span>自然语言理解 | Natural Language Understanding, NLU | 让计算机读懂语言含义的技术，如分类、抽取、问答 | 判断“快递太慢了”是一条投诉 |
+| <span id="g-自然语言生成"></span>自然语言生成 | Natural Language Generation, NLG | 让计算机产生自然语言文本的技术，如翻译、摘要、写作 | 根据会议录音自动写出会议纪要 |
+| <span id="g-歧义"></span>歧义 | Ambiguity | 同一个语言表达可以有多种理解的现象，是 NLP 的核心难点 | “咬死了猎人的狗”有两种理解 |
+| <span id="g-语料库"></span>语料库 | Corpus | 为语言研究和模型训练而收集、整理的大规模文本集合 | 实验用的 1 万条外卖评论 `waimai_10k.csv` |
+| <span id="g-大语言模型"></span>大语言模型 | Large Language Model, LLM | 参数规模巨大、在海量文本上预训练、具有通用语言理解与生成能力的模型 | DeepSeek、通义千问、文心一言 |
 
 ## 第 2 章 文本预处理
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-文本预处理"></span>文本预处理 | Text Preprocessing | 在分析或建模前对原始文本进行清洗、规范化、切分等处理的过程 |
-| <span id="g-字符编码"></span>字符编码 | Character Encoding | 把字符映射为计算机中二进制数据的规则，如 UTF-8、GBK |
-| <span id="g-正则表达式"></span>正则表达式 | Regular Expression | 用特定语法描述字符串模式，用于查找、替换和校验文本 |
-| <span id="g-分句"></span>分句 | Sentence Segmentation | 把一段文本切分为句子 |
-| <span id="g-词元化-分词"></span>词元化 / 分词 | Tokenization | 把文本切分为词、子词或字等基本单位（词元） |
-| <span id="g-停用词"></span>停用词 | Stop Words | 出现频率高但对任务贡献小的词，如“的”“了”“the” |
-| <span id="g-词干提取"></span>词干提取 | Stemming | 用规则去掉英文单词的词缀，得到词干，如 running → run |
-| <span id="g-词形还原"></span>词形还原 | Lemmatization | 借助词典把英文单词还原为原形，如 better → good |
-| <span id="g-繁简转换"></span>繁简转换 | Traditional-Simplified Conversion | 在繁体中文与简体中文之间转换 |
-| <span id="g-数据清洗"></span>数据清洗 | Data Cleaning | 去除噪声、重复、无效数据，提高数据质量的过程 |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-文本预处理"></span>文本预处理 | Text Preprocessing | 在分析或建模前对原始文本进行清洗、规范化、切分等处理的过程 | 去掉评论里的 HTML 标签和表情，再分词 |
+| <span id="g-字符编码"></span>字符编码 | Character Encoding | 把字符映射为计算机中二进制数据的规则，如 UTF-8、GBK | 用 UTF-8 读 GBK 文件会出现乱码 |
+| <span id="g-正则表达式"></span>正则表达式 | Regular Expression | 用特定语法描述字符串模式，用于查找、替换和校验文本 | `1[3-9]\d{9}` 描述手机号 |
+| <span id="g-分句"></span>分句 | Sentence Segmentation | 把一段文本切分为句子 | “好吃！下次还来。”切成两句 |
+| <span id="g-词元化-分词"></span>词元化 / 分词 | Tokenization | 把文本切分为词、子词或字等基本单位（词元） | They're → They / 're |
+| <span id="g-停用词"></span>停用词 | Stop Words | 出现频率高但对任务贡献小的词，如“的”“了”“the” | 做 TF-IDF 时去掉“的”“了”；情感分析要保留“不” |
+| <span id="g-词干提取"></span>词干提取 | Stemming | 用规则去掉英文单词的词缀，得到词干 | studying → studi，结果不一定是真单词 |
+| <span id="g-词形还原"></span>词形还原 | Lemmatization | 借助词典把英文单词还原为原形 | was → be，better → good |
+| <span id="g-繁简转换"></span>繁简转换 | Traditional-Simplified Conversion | 在繁体中文与简体中文之间转换 | 用 OpenCC 把“這個東西”转成“这个东西” |
+| <span id="g-数据清洗"></span>数据清洗 | Data Cleaning | 去除噪声、重复、无效数据，提高数据质量的过程 | 删除空评论、合并重复标点、去重 |
+| <span id="g-Unicode-规范化"></span>Unicode 规范化 | Unicode Normalization | 把写法不同、意思相同的字符统一为同一种编码形式 | NFKC 把“ＡＢＣ１２３”变成“ABC123” |
+| <span id="g-近似重复"></span>近似重复 | Near Duplicate | 内容几乎相同、只差个别字词或标点的文本 | “送餐太慢了，等了…”和“送餐太慢了,等了…” |
+| <span id="g-合成数据"></span>合成数据 | Synthetic Data | 由大模型等程序按要求生成、而非真实采集的数据 | 让大模型写 200 种“催单”的说法 |
 
 ## 第 3 章 词法分析
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-词法分析"></span>词法分析 | Lexical Analysis | 以词为单位的分析，包括分词、词性标注等 |
-| <span id="g-中文分词"></span>中文分词 | Chinese Word Segmentation | 把没有空格分隔的中文句子切分为词序列 |
-| <span id="g-最大匹配法"></span>最大匹配法 | Maximum Matching | 基于词典、每次取最长匹配词的分词方法，分正向、逆向和双向 |
-| <span id="g-切分歧义"></span>切分歧义 | Segmentation Ambiguity | 同一字串可以有多种切分方式的现象，分交集型和组合型 |
-| <span id="g-未登录词"></span>未登录词 | Out-of-Vocabulary Word, OOV | 词典或词表中没有收录的词，如新词、人名 |
-| <span id="g-词性标注"></span>词性标注 | Part-of-Speech Tagging | 为句子中的每个词标注名词、动词等词性 |
-| <span id="g-N-元语法"></span>N 元语法 | N-gram | 由连续 N 个词（或字）组成的片段；N 元语言模型据此估计句子概率 |
-| <span id="g-隐马尔可夫模型"></span>隐马尔可夫模型 | Hidden Markov Model, HMM | 用隐藏状态序列生成观测序列的概率模型，曾广泛用于分词和词性标注 |
-| <span id="g-子词"></span>子词 | Subword | 介于字符和词之间的切分单位，可以组合出罕见词 |
-| <span id="g-字节对编码"></span>字节对编码 | Byte Pair Encoding, BPE | 反复合并出现最频繁的相邻符号对来构建子词词表的算法 |
-| <span id="g-词元"></span>词元 | Token | 模型处理文本的最小单位；大模型按 Token 计费和限制长度 |
-| <span id="g-分词器"></span>分词器 | Tokenizer | 把文本转换为 Token 编号序列（以及反向转换）的组件 |
-| <span id="g-词表"></span>词表 | Vocabulary | 模型或分词器所认识的全部词元及其编号 |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-词法分析"></span>词法分析 | Lexical Analysis | 以词为单位的分析，包括分词、词性标注等 | 把“我爱北京”切成“我 / 爱 / 北京”并标出词性 |
+| <span id="g-中文分词"></span>中文分词 | Chinese Word Segmentation | 把没有空格分隔的中文句子切分为词序列 | “研究生命的起源”→ 研究 / 生命 / 的 / 起源 |
+| <span id="g-最大匹配法"></span>最大匹配法 | Maximum Matching | 基于词典、每次取最长匹配词的分词方法，分正向、逆向和双向 | 正向把“研究生命”切成“研究生 / 命” |
+| <span id="g-切分歧义"></span>切分歧义 | Segmentation Ambiguity | 同一字串可以有多种切分方式的现象，分交集型和组合型 | “乒乓球拍卖完了”有两种切法 |
+| <span id="g-未登录词"></span>未登录词 | Out-of-Vocabulary Word, OOV | 词典或词表中没有收录的词，如新词、人名 | “卷饼”“催单”不在 jieba 通用词典中 |
+| <span id="g-词性标注"></span>词性标注 | Part-of-Speech Tagging | 为句子中的每个词标注名词、动词等词性 | 味道/n 不错/a |
+| <span id="g-N-元语法"></span>N 元语法 | N-gram | 由连续 N 个词（或字）组成的片段；N 元语言模型据此估计句子概率 | “今天天气很”后面最常跟“好” |
+| <span id="g-隐马尔可夫模型"></span>隐马尔可夫模型 | Hidden Markov Model, HMM | 用隐藏状态序列生成观测序列的概率模型，曾广泛用于分词和词性标注 | 给“我爱北京”逐字标出 S S B E |
+| <span id="g-子词"></span>子词 | Subword | 介于字符和词之间的切分单位，可以组合出罕见词 | unbelievable → un / belie / vable |
+| <span id="g-字节对编码"></span>字节对编码 | Byte Pair Encoding, BPE | 反复合并出现最频繁的相邻符号对来构建子词词表的算法 | 先把“e s”合并为“es”，再合并为“est” |
+| <span id="g-词元"></span>词元 | Token | 模型处理文本的最小单位；大模型按 Token 计费和限制长度 | “自然语言处理”被切成 自然 / 语言 / 处理 三个 Token |
+| <span id="g-分词器"></span>分词器 | Tokenizer | 把文本转换为 Token 编号序列（以及反向转换）的组件 | 实验 3-3 中通义千问的分词器 |
+| <span id="g-词表"></span>词表 | Vocabulary | 模型或分词器所认识的全部词元及其编号 | 大模型词表通常有十几万个 Token |
+| <span id="g-新词发现"></span>新词发现 | New Word Discovery | 用凝固度、自由度等统计指标从大量文本中自动找出候选新词的方法 | 从外卖评论中找出“卷饼”“拌饭” |
+| <span id="g-兼类词"></span>兼类词 | Multi-category Word | 在不同句子中可以属于不同词性的词 | “锁门”的“锁”是动词，“这把锁”的“锁”是名词 |
 
 ## 第 4 章 句法分析
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-句法分析"></span>句法分析 | Syntactic Parsing | 分析句子的语法结构 |
-| <span id="g-成分句法"></span>成分句法 | Constituency Parsing | 把句子分析为层层嵌套的短语结构（句法树） |
-| <span id="g-上下文无关文法"></span>上下文无关文法 | Context-Free Grammar, CFG | 用“左边一个符号 → 右边符号串”形式的规则描述句子结构的文法 |
-| <span id="g-句法树"></span>句法树 | Parse Tree | 表示句子成分结构的树形图 |
-| <span id="g-依存句法"></span>依存句法 | Dependency Parsing | 分析句子中词与词之间支配与被支配关系的方法 |
-| <span id="g-核心词-中心词"></span>核心词 / 中心词 | Head | 依存关系中起支配作用的词 |
-| <span id="g-依存关系"></span>依存关系 | Dependency Relation | 两个词之间的语法关系，如主谓、动宾、定中 |
-| <span id="g-语义角色标注"></span>语义角色标注 | Semantic Role Labeling | 识别句子中谓词的施事、受事、时间、地点等语义角色 |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-句法分析"></span>句法分析 | Syntactic Parsing | 分析句子的语法结构，找出词与词怎样组成句子 | 分析出“物业拆除了车棚”中“物业”是主语、“车棚”是宾语 |
+| <span id="g-成分句法"></span>成分句法 | Constituency Parsing | 把句子分析为层层嵌套的短语结构（句法树） | “我 / 吃 / 苹果”→ [NP 我] [VP 吃 [NP 苹果]] |
+| <span id="g-上下文无关文法"></span>上下文无关文法 | Context-Free Grammar, CFG | 用“左边一个符号 → 右边符号串”形式的规则描述句子结构的文法 | S -> NP VP：句子 = 名词短语 + 动词短语 |
+| <span id="g-句法树"></span>句法树 | Parse Tree | 表示句子成分结构的树形图 | 根节点 S 下分出 NP 和 VP 两棵子树 |
+| <span id="g-树库"></span>树库 | Treebank | 人工为大量句子标注好句法结构的语料库，句法分析器从中学习 | 宾州中文树库（CTB） |
+| <span id="g-结构歧义"></span>结构歧义 | Structural Ambiguity | 同一串词可以组成不止一种合法的句法结构，从而有不同的意思 | “咬死了猎人的狗”：狗被咬死，还是狗咬死了猎人 |
+| <span id="g-概率上下文无关文法"></span>概率上下文无关文法 | Probabilistic CFG, PCFG | 给每条文法规则加上概率，用规则概率之积为句法树打分，选出最可能的树 | 规则“VP → V NP”的概率为 0.6 |
+| <span id="g-依存句法"></span>依存句法 | Dependency Parsing | 分析句子中词与词之间支配与被支配关系的方法 | “吃”支配“我”和“苹果” |
+| <span id="g-核心词-中心词"></span>核心词 / 中心词 | Head | 依存关系中起支配作用的词 | “红色的苹果”中，“苹果”是“红色”的中心词 |
+| <span id="g-依存关系"></span>依存关系 | Dependency Relation | 两个词之间的语法关系，如主谓、动宾、定中 | 物业 ← nsubj ← 拆除 |
+| <span id="g-语义分析"></span>语义分析 | Semantic Analysis | 研究如何让计算机理解词语、句子乃至篇章的含义 | 知道“车棚被物业拆除了”和“物业拆除了车棚”意思相同 |
+| <span id="g-词义消歧"></span>词义消歧 | Word Sense Disambiguation | 根据上下文确定多义词在句子中的具体含义 | “打车”中的“打”是乘坐的意思 |
+| <span id="g-语义角色标注"></span>语义角色标注 | Semantic Role Labeling | 识别句子中谓词的施事、受事、时间、地点等语义角色 | “拆除”的施事是物业，受事是车棚 |
+| <span id="g-语义依存分析"></span>语义依存分析 | Semantic Dependency Parsing | 用“图”表示词与词的语义关系，允许一个词有多个中心词 | “我请他吃饭”中，“他”既是“请”的受事又是“吃”的施事 |
+| <span id="g-指代消解"></span>指代消解 | Coreference Resolution | 找出代词或简称指的是前文中的哪个实体 | “小猫追老鼠，它跑累了”中“它”指小猫 |
+| <span id="g-文本蕴含"></span>文本蕴含 | Textual Entailment / NLI | 判断由前提句能否推出假设句：蕴含、矛盾或中立 | “小王在杭州跑马拉松”蕴含“小王去过杭州” |
 
 ## 第 5 章 文本表示
 

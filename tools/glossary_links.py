@@ -48,6 +48,29 @@ def add_anchors():
     GLOSSARY.write_text("\n".join(out) + "\n", encoding="utf-8")
 
 
+def link_plain(parts, term, aid, definition):
+    """正文里没有加粗形式时，链接第一次以普通文字出现的位置（跳过标题、表格、代码、提示框标题、已有链接）。"""
+    title = definition.replace('"', "“")
+    for i, part in enumerate(parts):
+        if part.startswith("```"):
+            continue
+        lines = part.split("\n")
+        for j, line in enumerate(lines):
+            st = line.lstrip()
+            if not st or st.startswith(("#", "|", "!!!", "???", "<", ">", "$")):
+                continue
+            # 去掉行内代码、链接、加粗后再找，保证不落在它们里面
+            masked = re.sub(r"`[^`]*`|\[[^\]]*\]\([^)]*\)(\{[^}]*\})?|\*\*[^*]*\*\*|<[^>]+>",
+                            lambda m: "\0" * len(m.group(0)), line)
+            pos = masked.find(term)
+            if pos >= 0:
+                link = f'[{term}](../../appendix/e-glossary.md#{aid} "{title}"){{ .term }}'
+                lines[j] = line[:pos] + link + line[pos + len(term):]
+                parts[i] = "\n".join(lines)
+                return True
+    return False
+
+
 def link_chapter(num):
     path = next(CHAPTERS.glob(f"{num:02d}-*/index.md"))
     text = path.read_text(encoding="utf-8")
@@ -59,7 +82,10 @@ def link_chapter(num):
     linked, missing = [], []
     for term, aid, definition in parse().get(num, []):
         target = f"**{term}**"
-        done = False
+        done = any(f"#{aid} " in p for p in parts)  # 已经链接过
+        if done:
+            linked.append(term)
+            continue
         for i, part in enumerate(parts):
             if part.startswith("```"):
                 continue
@@ -74,6 +100,8 @@ def link_chapter(num):
             if pos >= 0:
                 done = True
                 break
+        if not done:
+            done = link_plain(parts, term, aid, definition)
         (linked if done else missing).append(term)
     path.write_text(text[:start] + "".join(parts) + text[end:], encoding="utf-8")
     print(f"已链接 {len(linked)} 个术语；正文中没有找到加粗形式的：{'、'.join(missing) or '无'}")
