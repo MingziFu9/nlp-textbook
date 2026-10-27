@@ -71,6 +71,23 @@ def link_plain(parts, term, aid, definition):
     return False
 
 
+def link_bold(parts, name, aid, definition):
+    """把第一个 **name** 改为术语链接；已经是链接的算作完成。"""
+    target = f"**{name}**"
+    for i, part in enumerate(parts):
+        if part.startswith("```"):
+            continue
+        pos = part.find(target)
+        if pos < 0:
+            continue
+        if part[max(0, pos - 1):pos] != "[":
+            title = definition.replace('"', "“")
+            link = f'[**{name}**](../../appendix/e-glossary.md#{aid} "{title}"){{ .term }}'
+            parts[i] = part[:pos] + link + part[pos + len(target):]
+        return True
+    return False
+
+
 def link_chapter(num):
     path = next(CHAPTERS.glob(f"{num:02d}-*/index.md"))
     text = path.read_text(encoding="utf-8")
@@ -81,27 +98,21 @@ def link_chapter(num):
     parts = re.split(r"(```.*?```)", body, flags=re.S)
     linked, missing = [], []
     for term, aid, definition in parse().get(num, []):
-        target = f"**{term}**"
         done = any(f"#{aid} " in p for p in parts)  # 已经链接过
         if done:
             linked.append(term)
             continue
-        for i, part in enumerate(parts):
-            if part.startswith("```"):
-                continue
-            pos = part.find(target)
-            # 已经是链接的跳过
-            if pos >= 0 and not part[max(0, pos - 1):pos] == "[":
-                title = definition.replace('"', "“")
-                link = f'[**{term}**](../../appendix/e-glossary.md#{aid} "{title}"){{ .term }}'
-                parts[i] = part[:pos] + link + part[pos + len(target):]
-                done = True
-                break
-            if pos >= 0:
-                done = True
+        # “词向量 / 词嵌入”这类术语，正文中出现其中任一个写法即可
+        names = [term] + ([n.strip() for n in term.split(" / ")] if " / " in term else [])
+        for name in names:
+            done = link_bold(parts, name, aid, definition)
+            if done:
                 break
         if not done:
-            done = link_plain(parts, term, aid, definition)
+            for name in names:
+                done = link_plain(parts, name, aid, definition)
+                if done:
+                    break
         (linked if done else missing).append(term)
     path.write_text(text[:start] + "".join(parts) + text[end:], encoding="utf-8")
     print(f"已链接 {len(linked)} 个术语；正文中没有找到加粗形式的：{'、'.join(missing) or '无'}")

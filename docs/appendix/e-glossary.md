@@ -80,19 +80,29 @@ description: 本书主要术语的中英文名称与简明定义，按章节顺�
 
 ## 第 5 章 文本表示
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-文本表示"></span>文本表示 | Text Representation | 把文本转换为计算机可以计算的数值向量 |
-| <span id="g-独热编码"></span>独热编码 | One-hot Encoding | 用只有一个位置为 1、其余为 0 的向量表示词 |
-| <span id="g-词袋模型"></span>词袋模型 | Bag of Words | 只统计词出现次数、忽略词序的文本表示方法 |
-| <span id="g-词频-逆文档频率"></span>词频-逆文档频率 | TF-IDF | 用词在文档中的频率与其在整个语料中的稀有程度的乘积衡量词的重要性 |
-| <span id="g-余弦相似度"></span>余弦相似度 | Cosine Similarity | 用两个向量夹角的余弦值衡量其相似程度，取值 -1 到 1 |
-| <span id="g-分布式假设"></span>分布式假设 | Distributional Hypothesis | 上下文相似的词，意义也相似 |
-| <span id="g-词向量-词嵌入"></span>词向量 / 词嵌入 | Word Embedding | 用低维稠密向量表示词，语义相近的词向量相近 |
-| <span id="g-Word2Vec"></span>Word2Vec | Word2Vec | 通过预测上下文（Skip-gram）或中心词（CBOW）学习词向量的方法 |
-| <span id="g-上下文相关词向量"></span>上下文相关词向量 | Contextual Embedding | 同一个词在不同语境中得到不同向量的表示方法，如 BERT 的输出 |
-| <span id="g-文本嵌入"></span>文本嵌入 | Text Embedding | 把整句或整段文本表示为一个向量，用于语义检索和匹配 |
-| <span id="g-语义搜索"></span>语义搜索 | Semantic Search | 根据含义而非字面匹配进行的检索 |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-文本表示"></span>文本表示 | Text Representation | 把文本转换为计算机可以计算的数值向量 | 把“我喜欢机器学习”变成 [0, 1, 0, 1, …] |
+| <span id="g-独热编码"></span>独热编码 | One-hot Encoding | 用只有一个位置为 1、其余为 0 的向量表示词 | 词表 5 个词时，“喜欢”= [0, 1, 0, 0, 0] |
+| <span id="g-词袋模型"></span>词袋模型 | Bag of Words | 只统计词出现次数、忽略词序的文本表示方法 | “狗咬人”和“人咬狗”的词袋向量相同 |
+| <span id="g-N-gram-特征"></span>N-gram 特征 | N-gram Feature | 把相邻的两个或三个词也当成一个“词”放进词袋，保留部分词序 | “狗咬人”包含“狗咬”“咬人” |
+| <span id="g-TF-IDF"></span>TF-IDF | Term Frequency-Inverse Document Frequency | 用词在文档中的频率与其在整个语料中的稀有程度的乘积衡量词的重要性 | “的”的 TF-IDF 为 0，“大模型”为 0.06 |
+| <span id="g-BM25"></span>BM25 | Best Matching 25 | 在 TF-IDF 基础上加入词频饱和与长度惩罚的关键词检索打分方法 | 词频从 5 增加到 10，得分只从 1.77 增加到 1.96 |
+| <span id="g-余弦相似度"></span>余弦相似度 | Cosine Similarity | 用两个向量夹角的余弦值衡量其相似程度，取值 -1 到 1 | [1, 1, 0] 与 [1, 0, 1] 的余弦相似度为 0.5 |
+| <span id="g-Jaccard-相似度"></span>Jaccard 相似度 | Jaccard Similarity | 两个集合的交集大小除以并集大小 | {我, 爱, 北京} 与 {我, 爱, 上海} 为 0.5 |
+| <span id="g-编辑距离"></span>编辑距离 | Edit Distance | 把一个字符串变成另一个所需的最少插入、删除、替换次数 | “苹果手几”→“苹果手机”的编辑距离为 1 |
+| <span id="g-分布式假设"></span>分布式假设 | Distributional Hypothesis | 上下文相似的词，意义也相似 | 没见过“榴莲”，看到“水果店”“新鲜”也能猜出是水果 |
+| <span id="g-词向量-词嵌入"></span>词向量 / 词嵌入 | Word Embedding | 用低维稠密向量表示词，语义相近的词向量相近 | 与“快递”最相似的词是“物流”“配送” |
+| <span id="g-Word2Vec"></span>Word2Vec | Word2Vec | 通过预测上下文（Skip-gram）或中心词（CBOW）学习词向量的方法 | 给出“这家____的榴莲很新鲜”，猜“水果店” |
+| <span id="g-自监督学习"></span>自监督学习 | Self-supervised Learning | 从数据自身构造题目和答案来训练，不需要人工标注 | Word2Vec 从原句中自动生成（榴莲，新鲜）这样的样本 |
+| <span id="g-负采样"></span>负采样 | Negative Sampling | 随机抽词组成假样本，把多选题变成判断题以加快训练 | （榴莲，新鲜）为真，（榴莲，键盘）为假 |
+| <span id="g-上下文相关的词向量"></span>上下文相关的词向量 | Contextual Embedding | 同一个词在不同语境中得到不同向量的表示方法，如 BERT 的输出 | “吃苹果”和“苹果手机”中的“苹果”向量不同 |
+| <span id="g-文本嵌入"></span>文本嵌入 | Text Embedding | 把整句或整段文本表示为一个向量，用于语义检索和匹配 | BGE 模型把一句话变成一个 512 维向量 |
+| <span id="g-对比学习"></span>对比学习 | Contrastive Learning | 让意思相近的句子向量靠近、无关句子向量远离的训练方法 | “东西坏了能退吗”与“质量问题如何退货”配成一对 |
+| <span id="g-向量数据库"></span>向量数据库 | Vector Database | 存储向量并能快速找出最相似向量的数据库 | Milvus、Chroma |
+| <span id="g-近似最近邻检索"></span>近似最近邻检索 | Approximate Nearest Neighbor, ANN | 牺牲一点准确性、大幅提高速度的相似向量查找方法 | HNSW 算法沿“邻居关系网”逐步靠近目标 |
+| <span id="g-语义搜索"></span>语义搜索 | Semantic Search | 根据含义而非字面匹配进行的检索 | 用“东西坏了”找到“质量问题如何退货” |
+| <span id="g-混合检索"></span>混合检索 | Hybrid Search | 同时做关键词检索和语义检索，再合并排序 | BM25 结果和 BGE 向量检索结果合并 |
 
 ## 第 6 章 文本分类与情感分析
 

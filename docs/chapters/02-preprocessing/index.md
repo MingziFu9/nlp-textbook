@@ -301,7 +301,7 @@ flowchart LR
 
 [**分句**](../../appendix/e-glossary.md#g-分句 "把一段文本切分为句子"){ .term }（Sentence Segmentation）就是把文章切成一个个句子。不能简单地按句号切，因为“Dr. Smith”里的点不是句号，“3.14”里的点也不是。NLTK 的 `sent_tokenize` 使用了训练好的模型，能正确处理这些情况。
 
-**分词**（Tokenization）就是把句子切成一个个**词元**（Token）。英文分词也不只是按空格切：“NLP!”要切成“NLP”和“!”，“They're”要切成“They”和“'re”。NLTK 的 `word_tokenize` 会处理这些细节。
+[**分词**](../../appendix/e-glossary.md#g-词元化-分词 "把文本切分为词、子词或字等基本单位（词元）"){ .term }（Tokenization）就是把句子切成一个个**词元**（Token）。英文分词也不只是按空格切：“NLP!”要切成“NLP”和“!”，“They're”要切成“They”和“'re”。NLTK 的 `word_tokenize` 会处理这些细节。
 
 ### 2.5.2 大小写与标点
 
