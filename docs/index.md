@@ -25,18 +25,18 @@
 
 | 章 | 正文字数 | 实验 | 课后练习<br>（可在线作答） | 术语 | 参考文献 | 交互动画 |
 |---|---|---|---|---|---|---|
-| [第 1 章 自然语言处理概述](chapters/01-intro/index.md) | 1.2 万 | 3 | 23（15） | 7 | 10 | 1 |
-| [第 2 章 文本预处理](chapters/02-preprocessing/index.md) | 0.9 万 | 3 | 26（15） | 13 | 10 | 1 |
-| [第 3 章 词法分析：分词、词性与大模型分词器](chapters/03-lexical/index.md) | 1.2 万 | 3 | 24（15） | 15 | 9 | 2 |
-| [第 4 章 句法分析与语义分析](chapters/04-syntax/index.md) | 1.1 万 | 3 | 23（15） | 16 | 11 | 1 |
-| [第 5 章 文本表示：从词袋到文本嵌入](chapters/05-representation/index.md) | 1.2 万 | 3 | 26（15） | 21 | 11 | 2 |
-| [第 6 章 文本分类与情感分析](chapters/06-classification/index.md) | 1.2 万 | 3 | 24（15） | 27 | 10 | 2 |
-| [第 7 章 命名实体识别与信息抽取](chapters/07-ner/index.md) | 1.2 万 | 3 | 25（15） | 18 | 10 | 1 |
-| [第 8 章 深度学习基础：神经网络、RNN 与 LSTM](chapters/08-deep-learning/index.md) | 1.3 万 | 3 | 22（15） | 29 | 11 | 2 |
-| [第 9 章 Transformer 与预训练大模型](chapters/09-transformer/index.md) | 1.2 万 | 3 | 22（15） | 30 | 12 | 1 |
-| [第 10 章 机器翻译与文本生成](chapters/10-generation/index.md) | 1.2 万 | 3 | 22（15） | 22 | 11 | 3 |
-| [第 11 章 问答系统、RAG 与智能体](chapters/11-qa-rag-agent/index.md) | 1.3 万 | 3 | 22（15） | 22 | 10 | 2 |
-| [第 12 章 NLP 的伦理、安全与法律](chapters/12-ethics/index.md) | 1.3 万 | 3 | 22（15） | 16 | 12 | 1 |
+| [第 1 章](chapters/01-intro/index.md) | 1.2 万 | 3 | 23（15） | 7 | 10 | 1 |
+| [第 2 章](chapters/02-preprocessing/index.md) | 0.9 万 | 3 | 26（15） | 13 | 10 | 1 |
+| [第 3 章](chapters/03-lexical/index.md) | 1.2 万 | 3 | 24（15） | 15 | 9 | 2 |
+| [第 4 章](chapters/04-syntax/index.md) | 1.1 万 | 3 | 23（15） | 16 | 11 | 1 |
+| [第 5 章](chapters/05-representation/index.md) | 1.2 万 | 3 | 26（15） | 21 | 11 | 2 |
+| [第 6 章](chapters/06-classification/index.md) | 1.2 万 | 3 | 24（15） | 27 | 10 | 2 |
+| [第 7 章](chapters/07-ner/index.md) | 1.2 万 | 3 | 25（15） | 18 | 10 | 1 |
+| [第 8 章](chapters/08-deep-learning/index.md) | 1.3 万 | 3 | 22（15） | 29 | 11 | 2 |
+| [第 9 章](chapters/09-transformer/index.md) | 1.2 万 | 3 | 22（15） | 30 | 12 | 1 |
+| [第 10 章](chapters/10-generation/index.md) | 1.2 万 | 3 | 22（15） | 22 | 11 | 3 |
+| [第 11 章](chapters/11-qa-rag-agent/index.md) | 1.3 万 | 3 | 22（15） | 22 | 10 | 2 |
+| [第 12 章](chapters/12-ethics/index.md) | 1.3 万 | 3 | 22（15） | 16 | 12 | 1 |
 | **合计** | **14.3 万** | **36** | **281（180）** | **236** | **127** | **19** |
 
 正文字数只统计汉字，不含代码和课后练习；选择题和判断题可以在网页上直接作答。配套学习资源：[交互动画](sims/index.md) 19 个 · [学习图谱](learning-graph/index.md) 176 个概念 · [常见问题](faq/index.md) 55 问 · [术语表](appendix/e-glossary.md) 236 条。

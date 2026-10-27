@@ -14,14 +14,13 @@ START, END = "<!-- stats:start -->", "<!-- stats:end -->"
 
 def chapter_stats(path, num, glossary):
     s = path.read_text(encoding="utf-8")
-    title = re.search(r"^# 第 \d+ 章 (.+)$", s, re.M).group(1)
     body = s[:s.index("## 课后练习")]
     body = re.sub(r"```.*?```", "", body, flags=re.S)          # 不算代码
     body = re.sub(r"<[^>]+>|\]\([^)]*\)", "", body)              # 不算 HTML 标签和链接网址
     tail = s[s.index("## 课后练习"):]
     exercises = sum(len(re.findall(r"^\*\*\d+\.\*\*", part, re.M)) for part in re.split(r"\n\*\*[一二三四五]、", tail)[1:])
     return {
-        "num": num, "title": title, "dir": path.parent.name,
+        "num": num, "dir": path.parent.name,
         "words": len(re.findall(r"[一-鿿]", body)),
         "labs": len(re.findall(r"^### 实验 \d+-\d+", s, re.M)),
         "exercises": exercises,
@@ -45,7 +44,7 @@ def main():
     faq = (DOCS / "faq/index.md").read_text(encoding="utf-8").count('??? question')
     lines = [START, "", "| 章 | 正文字数 | 实验 | 课后练习<br>（可在线作答） | 术语 | 参考文献 | 交互动画 |", "|---|---|---|---|---|---|---|"]
     for r in rows:
-        lines.append(f"| [第 {r['num']} 章 {r['title']}](chapters/{r['dir']}/index.md) | {wan(r['words'])} | {r['labs']} | {r['exercises']}（{r['quiz']}） | {r['terms']} | {r['refs']} | {r['sims']} |")
+        lines.append(f"| [第 {r['num']} 章](chapters/{r['dir']}/index.md) | {wan(r['words'])} | {r['labs']} | {r['exercises']}（{r['quiz']}） | {r['terms']} | {r['refs']} | {r['sims']} |")
     lines.append(f"| **合计** | **{wan(total['words'])}** | **{total['labs']}** | **{total['exercises']}（{total['quiz']}）** | **{total['terms']}** | **{total['refs']}** | **{total['sims']}** |")
     lines += ["", f"正文字数只统计汉字，不含代码和课后练习；选择题和判断题可以在网页上直接作答。配套学习资源：[交互动画](sims/index.md) {total['sims']} 个 · [学习图谱](learning-graph/index.md) {concepts} 个概念 · [常见问题](faq/index.md) {faq} 问 · [术语表](appendix/e-glossary.md) {total['terms']} 条。", "", END]
     index = DOCS / "index.md"
