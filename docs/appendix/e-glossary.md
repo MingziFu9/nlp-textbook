@@ -138,19 +138,26 @@ description: 本书主要术语的中英文名称与简明定义，按章节顺�
 
 ## 第 7 章 命名实体识别与信息抽取
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-信息抽取"></span>信息抽取 | Information Extraction, IE | 从非结构化文本中抽取指定类型的信息并整理成结构化数据 |
-| <span id="g-命名实体识别"></span>命名实体识别 | Named Entity Recognition, NER | 识别文本中人名、地名、机构名等实体的位置和类型 |
-| <span id="g-序列标注"></span>序列标注 | Sequence Labeling | 为序列中的每个元素分配一个标签的任务，如分词、词性标注、NER |
-| <span id="g-BIO-标注"></span>BIO 标注 | BIO Tagging | 用 B（开始）、I（内部）、O（外部）标注实体边界的方法 |
-| <span id="g-条件随机场"></span>条件随机场 | Conditional Random Field, CRF | 考虑相邻标签之间依赖关系的序列标注模型 |
-| <span id="g-关系抽取"></span>关系抽取 | Relation Extraction | 判断文本中两个实体之间的语义关系 |
-| <span id="g-三元组"></span>三元组 | Triple | （头实体，关系，尾实体）形式的知识表示 |
-| <span id="g-事件抽取"></span>事件抽取 | Event Extraction | 识别事件类型、触发词和事件论元（时间、地点、参与者等） |
-| <span id="g-知识图谱"></span>知识图谱 | Knowledge Graph | 以实体为节点、关系为边组织知识的图结构 |
-| <span id="g-实体链接"></span>实体链接 | Entity Linking | 把文本中的实体指称对应到知识库中唯一实体的任务 |
-| <span id="g-数据标注"></span>数据标注 | Data Annotation | 按照规范为数据添加标签，供模型训练和评估使用 |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-信息抽取"></span>信息抽取 | Information Extraction, IE | 从非结构化文本中抽取指定类型的信息并整理成结构化数据 | 从新闻中抽出时间、地点、公司、人物填入表格 |
+| <span id="g-命名实体识别"></span>命名实体识别 | Named Entity Recognition, NER | 识别文本中人名、地名、机构名等实体的位置和类型 | 李志远（人名）、星海科技有限公司（机构名） |
+| <span id="g-嵌套实体"></span>嵌套实体 | Nested Entity | 一个实体内部又包含另一个实体 | “浙江大学计算机学院”里含有“浙江大学”和“浙江” |
+| <span id="g-序列标注"></span>序列标注 | Sequence Labeling | 为序列中的每个元素分配一个标签的任务，如分词、词性标注、NER | 给“李志远在杭州”的每个字贴一个标签 |
+| <span id="g-BIO-标注"></span>BIO 标注 | BIO Tagging | 用 B（开始）、I（内部）、O（外部）标注实体边界的方法 | 杭/B-LOC 州/I-LOC 在/O |
+| <span id="g-条件随机场"></span>条件随机场 | Conditional Random Field, CRF | 考虑相邻标签之间依赖关系的序列标注模型 | 避免出现“O → I-PER”这样不合理的标签 |
+| <span id="g-实体链接"></span>实体链接 | Entity Linking | 把文本中的实体指称对应到知识库中唯一实体的任务 | “浙大”“ZJU”都对应到“浙江大学” |
+| <span id="g-关系抽取"></span>关系抽取 | Relation Extraction | 判断文本中两个实体之间的语义关系 | 从“董事长李志远”判断出任职关系 |
+| <span id="g-三元组"></span>三元组 | Triple | （头实体，关系，尾实体）形式的知识表示 | （李志远，董事长，星海科技有限公司） |
+| <span id="g-远程监督"></span>远程监督 | Distant Supervision | 用知识库中已有的关系自动给句子打标签来产生训练数据 | 凡同时提到李志远和星海科技的句子都标为“董事长” |
+| <span id="g-事件抽取"></span>事件抽取 | Event Extraction | 识别事件类型、触发词和事件论元（时间、地点、参与者等） | “投入 5 亿元”→ 投资计划事件，金额 5 亿元 |
+| <span id="g-触发词"></span>触发词 | Trigger | 最能表明事件发生的词，通常是动词 | “签约”“宣布”“投入” |
+| <span id="g-知识图谱"></span>知识图谱 | Knowledge Graph | 以实体为节点、关系为边组织知识的图结构 | 搜索名人时右侧的知识卡片 |
+| <span id="g-图数据库"></span>图数据库 | Graph Database | 专门存储和查询节点与关系的数据库，擅长多跳查询 | Neo4j、NebulaGraph |
+| <span id="g-数据标注"></span>数据标注 | Data Annotation | 按照规范为数据添加标签，供模型训练和评估使用 | 用 Label Studio 选中文字并点击实体类型 |
+| <span id="g-标注规范"></span>标注规范 | Annotation Guideline | 规定标注类型、边界和特殊情况处理方法的文档 | “职务不属于人名，董事长李志远只标李志远” |
+| <span id="g-Kappa-系数"></span>Kappa 系数 | Cohen's Kappa | 扣除碰巧一致部分后衡量两名标注员一致程度的指标 | 实际一致率 0.85、碰巧一致率 0.5 时 Kappa 为 0.70 |
+| <span id="g-通用信息抽取"></span>通用信息抽取 | Universal Information Extraction, UIE | 把各种抽取任务统一成“按给定目标找片段”的形式，一个模型完成多种抽取 | 告诉模型“抽取人名、公司、职务”即可直接使用 |
 
 ## 第 8 章 深度学习基础
 
