@@ -161,36 +161,37 @@ description: 本书主要术语的中英文名称与简明定义，按章节顺�
 
 ## 第 8 章 深度学习基础
 
-| 术语 | 英文 | 定义 |
-|---|---|---|
-| <span id="g-深度学习"></span>深度学习 | Deep Learning | 使用多层神经网络从数据中自动学习特征的机器学习方法 |
-| <span id="g-表示学习"></span>表示学习 | Representation Learning | 让模型自动学习数据的有用表示，而非依赖人工特征 |
-| <span id="g-神经元"></span>神经元 | Neuron | 对输入加权求和、加上偏置后经激活函数输出的计算单元 |
-| <span id="g-权重-偏置"></span>权重 / 偏置 | Weight / Bias | 神经元中由训练学习得到的参数 |
-| <span id="g-感知机"></span>感知机 | Perceptron | 只有一个神经元、使用阶跃激活函数的最简单神经网络 |
-| <span id="g-多层感知机"></span>多层感知机 | Multi-Layer Perceptron, MLP | 含一个或多个隐藏层的全连接前馈神经网络 |
-| <span id="g-激活函数"></span>激活函数 | Activation Function | 为神经网络引入非线性的函数，如 Sigmoid、Tanh、ReLU |
-| <span id="g-Softmax"></span>Softmax | Softmax | 把一组得分转换为和为 1 的概率分布的函数 |
-| <span id="g-损失函数"></span>损失函数 | Loss Function | 衡量模型预测与真实答案之间差距的函数 |
-| <span id="g-交叉熵"></span>交叉熵 | Cross-Entropy | 分类任务常用的损失函数，等于正确类别预测概率的负对数 |
-| <span id="g-梯度"></span>梯度 | Gradient | 损失函数对参数的偏导数，指示参数调整的方向和幅度 |
-| <span id="g-反向传播"></span>反向传播 | Backpropagation | 利用链式法则从输出层向输入层逐层计算梯度的算法 |
-| <span id="g-梯度下降"></span>梯度下降 | Gradient Descent | 沿梯度反方向更新参数以减小损失的优化方法 |
-| <span id="g-学习率"></span>学习率 | Learning Rate | 每次参数更新的步长，是最重要的超参数之一 |
-| <span id="g-优化器"></span>优化器 | Optimizer | 根据梯度更新参数的算法，如 SGD、Adam、AdamW |
-| <span id="g-轮次-批"></span>轮次 / 批 | Epoch / Batch | 完整使用一遍训练数据称为一轮；每次更新所用的一小组样本称为一批 |
-| <span id="g-超参数"></span>超参数 | Hyperparameter | 训练前由人设定、不由模型学习的参数 |
-| <span id="g-过拟合"></span>过拟合 | Overfitting | 模型在训练集上表现好、在新数据上表现差的现象 |
-| <span id="g-随机失活"></span>随机失活 | Dropout | 训练时随机关闭部分神经元以减轻过拟合的方法 |
-| <span id="g-张量"></span>张量 | Tensor | 深度学习框架中的多维数组，可在 GPU 上计算并自动求导 |
-| <span id="g-词嵌入层"></span>词嵌入层 | Embedding Layer | 把词的编号映射为可训练词向量的查找表 |
-| <span id="g-循环神经网络"></span>循环神经网络 | Recurrent Neural Network, RNN | 通过隐藏状态在时间步之间传递信息、处理序列数据的网络 |
-| <span id="g-隐藏状态"></span>隐藏状态 | Hidden State | 循环网络中保存已读内容信息的向量 |
-| <span id="g-梯度消失-梯度爆炸"></span>梯度消失 / 梯度爆炸 | Vanishing / Exploding Gradient | 反向传播中梯度逐层变得极小或极大，导致训练困难的现象 |
-| <span id="g-长短期记忆网络"></span>长短期记忆网络 | Long Short-Term Memory, LSTM | 用记忆细胞和遗忘门、输入门、输出门控制信息流动的循环网络 |
-| <span id="g-门控循环单元"></span>门控循环单元 | Gated Recurrent Unit, GRU | 只有更新门和重置门的简化版 LSTM |
-| <span id="g-双向循环网络"></span>双向循环网络 | Bidirectional RNN | 分别从左向右和从右向左读取序列并拼接结果的循环网络 |
-| <span id="g-状态空间模型"></span>状态空间模型 | State Space Model, SSM | 以固定大小状态递推处理长序列的模型，如 Mamba |
+| 术语 | 英文 | 定义 | 例子 |
+|---|---|---|---|
+| <span id="g-深度学习"></span>深度学习 | Deep Learning | 使用多层神经网络从数据中自动学习特征的机器学习方法 | LSTM 读评论自己学会“但是”之后的内容更重要 |
+| <span id="g-表示学习"></span>表示学习 | Representation Learning | 让模型自动学习数据的有用表示，而非依赖人工特征 | 不再手工选词袋、停用词，由网络自己学特征 |
+| <span id="g-神经元"></span>神经元 | Neuron | 对输入加权求和、加上偏置后经激活函数输出的计算单元 | 0.5×x₁ + 0.3×x₂ − 0.2，再经过 ReLU |
+| <span id="g-权重-偏置"></span>权重 / 偏置 | Weight / Bias | 神经元中由训练学习得到的参数 | 实验 8-2 的 LSTM 分类器约有 73 万个参数 |
+| <span id="g-感知机"></span>感知机 | Perceptron | 只有一个神经元、使用阶跃激活函数的最简单神经网络 | 能学会“与”“或”，学不会“异或” |
+| <span id="g-线性不可分"></span>线性不可分 | Linearly Inseparable | 无法用一条直线（或一个平面）把两类点分开的情况 | 异或问题的两个 1 在对角线两端 |
+| <span id="g-多层感知机"></span>多层感知机 | Multi-Layer Perceptron, MLP | 含一个或多个隐藏层的全连接前馈神经网络 | 2 个输入、3 个隐藏神经元、1 个输出的网络能解决异或 |
+| <span id="g-激活函数"></span>激活函数 | Activation Function | 为神经网络引入非线性的函数，如 Sigmoid、Tanh、ReLU | ReLU(−3) = 0，ReLU(2) = 2 |
+| <span id="g-Softmax"></span>Softmax | Softmax | 把一组得分转换为和为 1 的概率分布的函数 | 得分 2.0、1.0、0.1 → 概率 0.66、0.24、0.10 |
+| <span id="g-损失函数"></span>损失函数 | Loss Function | 衡量模型预测与真实答案之间差距的函数 | 分类用交叉熵，预测房价用均方误差 |
+| <span id="g-交叉熵"></span>交叉熵 | Cross-Entropy | 分类任务常用的损失函数，等于正确类别预测概率的负对数 | 正确类别概率 0.9 时损失约 0.105，0.1 时约 2.303 |
+| <span id="g-梯度"></span>梯度 | Gradient | 损失函数对参数的偏导数，指示参数调整的方向和幅度 | 梯度为正，说明应该把这个权重调小 |
+| <span id="g-反向传播"></span>反向传播 | Backpropagation | 利用链式法则从输出层向输入层逐层计算梯度的算法 | PyTorch 中的 `loss.backward()` |
+| <span id="g-梯度下降"></span>梯度下降 | Gradient Descent | 沿梯度反方向更新参数以减小损失的优化方法 | 蒙眼下山，每次往最陡的下坡方向迈一小步 |
+| <span id="g-学习率"></span>学习率 | Learning Rate | 每次参数更新的步长，是最重要的超参数之一 | 常用 0.0001 到 0.01；太大会来回震荡 |
+| <span id="g-优化器"></span>优化器 | Optimizer | 根据梯度更新参数的算法，如 SGD、Adam、AdamW | `torch.optim.Adam(model.parameters(), lr=0.001)` |
+| <span id="g-轮次-批"></span>轮次 / 批 | Epoch / Batch | 完整使用一遍训练数据称为一轮；每次更新所用的一小组样本称为一批 | 批大小 64，训练 6 轮 |
+| <span id="g-超参数"></span>超参数 | Hyperparameter | 训练前由人设定、不由模型学习的参数 | 学习率、批大小、隐藏层大小 |
+| <span id="g-过拟合"></span>过拟合 | Overfitting | 模型在训练集上表现好、在新数据上表现差的现象 | 训练集准确率 99%，测试集只有 85% |
+| <span id="g-随机失活"></span>随机失活 | Dropout | 训练时随机关闭部分神经元以减轻过拟合的方法 | `nn.Dropout(0.3)` 每次随机关掉 30% 的神经元 |
+| <span id="g-张量"></span>张量 | Tensor | 深度学习框架中的多维数组，可在 GPU 上计算并自动求导 | 一批 64 条、每条 40 个词的数据是 64×40 的张量 |
+| <span id="g-词嵌入层"></span>词嵌入层 | Embedding Layer | 把词的编号映射为可训练词向量的查找表 | 编号 35 → 一个 128 维向量 |
+| <span id="g-循环神经网络"></span>循环神经网络 | Recurrent Neural Network, RNN | 通过隐藏状态在时间步之间传递信息、处理序列数据的网络 | 依次读入“送餐”“很”“快” |
+| <span id="g-隐藏状态"></span>隐藏状态 | Hidden State | 循环网络中保存已读内容信息的向量 | 读完“送餐很快”后的 h₃ 汇集了整句信息 |
+| <span id="g-梯度消失-梯度爆炸"></span>梯度消失 / 梯度爆炸 | Vanishing / Exploding Gradient | 反向传播中梯度逐层变得极小或极大，导致训练困难的现象 | 每步乘 0.5，传 20 步后梯度只剩约百万分之一 |
+| <span id="g-长短期记忆网络"></span>长短期记忆网络 | Long Short-Term Memory, LSTM | 用记忆细胞和遗忘门、输入门、输出门控制信息流动的循环网络 | 读到“但是”时用遗忘门擦掉前面的好评印象 |
+| <span id="g-门控循环单元"></span>门控循环单元 | Gated Recurrent Unit, GRU | 只有更新门和重置门的简化版 LSTM | 参数比 LSTM 少约四分之一 |
+| <span id="g-双向循环网络"></span>双向循环网络 | Bidirectional RNN | 分别从左向右和从右向左读取序列并拼接结果的循环网络 | 看到后面的“发布了新手机”才知道“苹果”是公司 |
+| <span id="g-状态空间模型"></span>状态空间模型 | State Space Model, SSM | 以固定大小状态递推处理长序列的模型，如 Mamba | 序列再长，每一步也只维护一个固定大小的状态 |
 
 ## 第 9 章 Transformer 与预训练大模型
 
