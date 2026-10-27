@@ -1,0 +1,57 @@
+/* ===== 交互练习题 ===== */
+.quiz ul { list-style: none; padding-left: 0; margin-left: 0 !important; }
+.quiz li {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px;
+  padding: .35em .8em;
+  margin: .35em 0 !important;
+  cursor: pointer;
+  transition: background-color .15s, border-color .15s;
+}
+.quiz li:hover { border-color: var(--md-accent-fg-color); }
+.quiz.answered li { cursor: default; }
+.quiz li.correct { background: #e8f5e9; border-color: #43a047; }
+.quiz li.wrong   { background: #ffebee; border-color: #e53935; }
+.quiz li.correct::after { content: "  ✔ 正确"; color: #2e7d32; font-weight: bold; }
+.quiz li.wrong::after   { content: "  ✘ 你的选择"; color: #c62828; font-weight: bold; }
+.quiz-judge ul { display: flex; gap: .8em; }
+.quiz-judge li { flex: 0 0 auto; min-width: 6em; text-align: center; }
+.quiz-feedback { font-weight: bold; margin: .2em 0 .4em; }
+.quiz-feedback.ok { color: #2e7d32; }
+.quiz-feedback.no { color: #c62828; }
+.quiz-score {
+  border-left: 4px solid var(--md-accent-fg-color);
+  padding: .3em .8em; margin: 1em 0; font-size: .8rem;
+}
+.quiz-meta { font-size: .75rem; color: var(--md-default-fg-color--light); }
+
+/* ===== 术语链接：虚线下划线，悬停显示定义 ===== */
+a.term { color: inherit; border-bottom: 1px dashed var(--md-accent-fg-color); }
+a.term:hover { color: var(--md-accent-fg-color); }
+
+/* ===== 参考文献 ===== */
+.refs ul { list-style: none; padding-left: 0; margin-left: 0 !important; }
+.refs li { margin-bottom: .8em !important; margin-left: 0 !important; }
+.ref-note { display: block; font-size: .78rem; color: var(--md-default-fg-color--light); }
+sup.cite a { font-size: .7em; }
+
+/* ===== 交互动画嵌入 ===== */
+.sim-frame { width: 100%; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 8px; }
+.sim-caption { font-size: .78rem; color: var(--md-default-fg-color--light); margin-top: -.4em; }
+
+/* ===== 本章概念清单：多栏排列 ===== */
+.md-typeset details.abstract ol { columns: 3; column-gap: 2em; }
+@media (max-width: 600px) { .md-typeset details.abstract ol { columns: 2; } }
+.md-typeset .admonition .quiz-meta, .md-typeset details .quiz-meta { font-size: inherit; color: var(--md-default-fg-color--light); }
+
+/* 术语定义悬停提示（由 book.js 把 title 移到 data-def） */
+a.term { position: relative; }
+a.term[data-def]:hover::after {
+  content: attr(data-def);
+  position: absolute; left: 0; top: 1.6em; z-index: 10;
+  width: max-content; max-width: 22em;
+  padding: .4em .7em; border-radius: 4px;
+  background: #37474f; color: #fff;
+  font-size: .72rem; font-weight: normal; line-height: 1.5;
+  white-space: normal; pointer-events: none;
+}

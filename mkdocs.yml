@@ -10,6 +10,9 @@ theme:
     - content.code.copy
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
+  - abbr
   - pymdownx.details
   - pymdownx.highlight
   - pymdownx.superfences:
@@ -22,8 +25,11 @@ markdown_extensions:
       generic: true
   - toc:
       permalink: true
+extra_css:
+  - css/extra.css
 extra_javascript:
   - javascripts/mathjax.js
+  - javascripts/book.js
   - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
 nav:
   - 首页: index.md
@@ -40,6 +46,10 @@ nav:
   - "第 10 章 机器翻译与文本生成": chapters/10-generation/index.md
   - "第 11 章 问答系统、RAG 与智能体": chapters/11-qa-rag-agent/index.md
   - "第 12 章 NLP 的伦理、安全与法律": chapters/12-ethics/index.md
+  - 交互动画:
+    - sims/index.md
+    - "阈值与混淆矩阵": sims/threshold-confusion/index.md
+    - "情感词典打分演示": sims/lexicon-scorer/index.md
   - 附录:
     - "附录 A Python 速查": appendix/a-python.md
     - "附录 B NLP 工具库接口速查": appendix/b-libraries.md

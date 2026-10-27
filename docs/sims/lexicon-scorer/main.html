@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>情感词典打分演示</title>
+<style>
+  :root { --pos:#43a047; --neg:#e53935; --not:#8e24aa; --deg:#ef6c00; --ink:#263238; --muted:#78909c; --line:#cfd8dc; --accent:#3f51b5; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:12px; font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif; color:var(--ink); background:#fff; }
+  h1 { font-size:16px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin-bottom:8px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:6px 0; }
+  input[type=text] { flex:1; min-width:220px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; font-size:15px; }
+  button { border:1px solid var(--accent); background:#fff; color:var(--accent); border-radius:14px; padding:3px 12px; cursor:pointer; font-size:13px; }
+  button.main { background:var(--accent); color:#fff; }
+  button:disabled { opacity:.4; cursor:default; }
+  .ex button { border-color:var(--line); color:var(--ink); font-size:12px; }
+  .tokens { display:flex; flex-wrap:wrap; gap:4px; padding:10px; min-height:52px; border:1px dashed var(--line); border-radius:8px; margin-top:8px; }
+  .tok { padding:2px 6px; border-radius:4px; border:2px solid transparent; background:#f5f5f5; transition:all .2s; }
+  .tok.pos { background:#e8f5e9; color:#1b5e20; } .tok.neg { background:#ffebee; color:#b71c1c; }
+  .tok.not { background:#f3e5f5; color:#6a1b9a; } .tok.deg { background:#fff3e0; color:#e65100; }
+  .tok.win { border-color:#90a4ae; border-style:dashed; }
+  .tok.cur { border-color:var(--accent); transform:scale(1.12); }
+  .legend { font-size:12px; color:var(--muted); margin-top:4px; }
+  .legend span { padding:0 4px; border-radius:3px; margin-right:6px; }
+  .steps { margin-top:10px; font-size:13.5px; }
+  .steps li { margin:2px 0; }
+  .verdict { margin-top:8px; font-size:16px; font-weight:bold; }
+  .verdict.p { color:var(--pos); } .verdict.n { color:var(--neg); } .verdict.z { color:var(--muted); }
+  details { margin-top:10px; font-size:12.5px; }
+  .dict b { display:inline-block; width:5em; }
+  .note { font-size:12px; color:var(--muted); margin-top:8px; }
+</style>
+</head>
+<body>
+<h1>情感词典打分：否定词“翻转”，程度副词“加权”</h1>
+<div class="sub">规则与实验 6-1 相同：正面词 +1、负面词 −1；往前看最多 3 个词，遇到程度副词就乘以它的权重，遇到否定词就乘以 −1；总分 &gt; 0 判好评，&lt; 0 判差评，= 0 为中性。</div>
+
+<div class="row">
+  <input id="txt" type="text" value="不好吃，而且送得非常慢" aria-label="输入一条评论">
+</div>
+<div class="row ex" id="ex"></div>
+<div class="row">
+  <button class="main" id="step">下一步 ▶</button>
+  <button id="all">直接算出结果</button>
+  <button id="reset">重新开始</button>
+</div>
+
+<div class="tokens" id="tokens"></div>
+<div class="legend"><span class="tok pos">正面词</span><span class="tok neg">负面词</span><span class="tok not">否定词</span><span class="tok deg">程度副词</span>虚线框：当前情感词往前看的 3 个词</div>
+<ol class="steps" id="steps"></ol>
+<div class="verdict" id="verdict"></div>
+
+<details>
+  <summary>查看 / 修改情感词典</summary>
+  <div class="dict" id="dict"></div>
+  <div class="row">
+    <input id="newword" type="text" placeholder="输入一个词，例如：破损" style="max-width:200px;font-size:13px">
+    <button id="addpos">加入正面词</button><button id="addneg">加入负面词</button>
+  </div>
+</details>
+<div class="note">说明：网页里没有 jieba，这里用“词典最长匹配”来切词：能在词典里找到的词整体切出，其余逐字切开。所以个别结果会和实验 6-1 不同。例如“饭菜也没凉”，jieba 把“没凉”切成一个词、匹配不上，得 0 分；这里切成“没 / 凉”，否定词起了作用，得 +1。分词结果会直接影响词典法的效果。</div>
+
+<script>
+(function () {
+  var POS = ["好吃","好","不错","满意","快","新鲜","美味","喜欢","赞","棒","推荐","热情","准时","实惠","干净","香","划算","周到","好评","可口"];
+  var NEG = ["难吃","差","慢","凉","冷","失望","贵","少","咸","淡","差评","糟糕","恶心","垃圾","退款","投诉","硬","腥","坑","难等"];
+  var NOTS = ["不","没","没有","别","无","并非","不是"];
+  var DEG = { "太":2, "很":1.5, "非常":2, "特别":2, "超":2, "有点":0.5, "稍微":0.5 };
+  var EXAMPLES = ["味道很好，送餐也快","太难吃了，再也不点了","不好吃，而且送得非常慢","味道不错，就是有点贵","包装没有破损，饭菜也没凉","宇宙最慢的卷饼"];
+
+  var txt = document.getElementById("txt"), tokensEl = document.getElementById("tokens"), stepsEl = document.getElementById("steps"), verdict = document.getElementById("verdict");
+  var tokens = [], plan = [], cursor = 0, total = 0;
+
+  function kind(w) {
+    if (POS.indexOf(w) >= 0) return "pos";
+    if (NEG.indexOf(w) >= 0) return "neg";
+    if (NOTS.indexOf(w) >= 0) return "not";
+    if (DEG[w]) return "deg";
+    return "";
+  }
+
+  // 词典最长匹配切词：词典里有的词整体切出，其余逐字切开（标点也算一个词，和 jieba 一致）
+  function cut(s) {
+    var dict = POS.concat(NEG, NOTS, Object.keys(DEG)), maxLen = 4, out = [], i = 0;
+    while (i < s.length) {
+      var w = s[i];
+      for (var L = Math.min(maxLen, s.length - i); L > 1; L--) {
+        var c = s.substr(i, L);
+        if (dict.indexOf(c) >= 0) { w = c; break; }
+      }
+      out.push(w); i += w.length;
+    }
+    return out.filter(function (w) { return !/^\s+$/.test(w); });
+  }
+
+  function build() {
+    tokens = cut(txt.value.trim()); plan = []; cursor = 0; total = 0;
+    tokens.forEach(function (w, i) {
+      var k = kind(w);
+      if (k !== "pos" && k !== "neg") return;
+      var s = k === "pos" ? 1 : -1, notes = [], from = Math.max(0, i - 3);
+      for (var j = from; j < i; j++) {
+        var pk = kind(tokens[j]);
+        if (pk === "deg") { s *= DEG[tokens[j]]; notes.push("前面有程度副词“" + tokens[j] + "”，×" + DEG[tokens[j]]); }
+        if (pk === "not") { s *= -1; notes.push("前面有否定词“" + tokens[j] + "”，翻转 ×(−1)"); }
+      }
+      plan.push({ i: i, from: from, w: w, base: k === "pos" ? 1 : -1, s: s, notes: notes });
+    });
+    render(-1); stepsEl.innerHTML = ""; verdict.textContent = "";
+    document.getElementById("step").disabled = false;
+    if (!plan.length) finish();
+  }
+
+  function render(active) {
+    var p = active >= 0 ? plan[active] : null;
+    tokensEl.innerHTML = tokens.map(function (w, i) {
+      var c = "tok " + kind(w);
+      if (p && i >= p.from && i < p.i) c += " win";
+      if (p && i === p.i) c += " cur";
+      return '<span class="' + c + '">' + w.replace(/</g, "&lt;") + "</span>";
+    }).join("") || '<span class="tok">（请输入评论）</span>';
+  }
+
+  function fmt(x) { return (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(1); }
+
+  function step() {
+    if (cursor >= plan.length) return;
+    var p = plan[cursor]; render(cursor);
+    total += p.s;
+    var li = document.createElement("li");
+    li.innerHTML = "<b>" + p.w + "</b>：基础分 " + fmt(p.base) + (p.notes.length ? "；" + p.notes.join("；") : "；前面没有否定词和程度副词") + " → <b>" + fmt(p.s) + "</b>　累计 " + fmt(total);
+    stepsEl.appendChild(li);
+    cursor++;
+    if (cursor >= plan.length) finish();
+  }
+
+  function finish() {
+    document.getElementById("step").disabled = true;
+    var cls = total > 0 ? "p" : total < 0 ? "n" : "z";
+    verdict.className = "verdict " + cls;
+    verdict.textContent = "总分 " + fmt(total) + " → " + (total > 0 ? "好评" : total < 0 ? "差评" : "中性（词典里一个情感词都没匹配上，或正负抵消）");
+  }
+
+  function showDict() {
+    document.getElementById("dict").innerHTML =
+      "<div><b>正面词</b>" + POS.join("、") + "</div><div><b>负面词</b>" + NEG.join("、") +
+      "</div><div><b>否定词</b>" + NOTS.join("、") + "</div><div><b>程度副词</b>" +
+      Object.keys(DEG).map(function (k) { return k + "×" + DEG[k]; }).join("、") + "</div>";
+  }
+
+  function addWord(list) {
+    var w = document.getElementById("newword").value.trim();
+    if (w && POS.indexOf(w) < 0 && NEG.indexOf(w) < 0) { list.push(w); showDict(); build(); }
+    document.getElementById("newword").value = "";
+  }
+
+  document.getElementById("ex").innerHTML = "<span style='font-size:12px;color:#78909c'>试试：</span>" +
+    EXAMPLES.map(function (e) { return "<button>" + e + "</button>"; }).join("");
+  document.querySelectorAll("#ex button").forEach(function (b) { b.addEventListener("click", function () { txt.value = b.textContent; build(); }); });
+  document.getElementById("step").addEventListener("click", step);
+  document.getElementById("all").addEventListener("click", function () { while (cursor < plan.length) step(); render(-1); });
+  document.getElementById("reset").addEventListener("click", build);
+  document.getElementById("addpos").addEventListener("click", function () { addWord(POS); });
+  document.getElementById("addneg").addEventListener("click", function () { addWord(NEG); });
+  txt.addEventListener("input", build);
+  showDict(); build();
+})();
+</script>
+<script>
+// 嵌入教材页面时，把自身高度告诉外层页面，让 iframe 自动调整高度
+(function () {
+  if (window.parent === window) return;
+  function report() { window.parent.postMessage({ simHeight: Math.ceil(document.body.getBoundingClientRect().height) }, "*"); }
+  new ResizeObserver(report).observe(document.body);
+  window.addEventListener("load", report);
+})();
+</script>
+</body>
+</html>

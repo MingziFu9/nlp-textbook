@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>阈值与混淆矩阵</title>
+<style>
+  :root { --bad:#e53935; --good:#43a047; --ink:#263238; --muted:#78909c; --line:#cfd8dc; --accent:#3f51b5; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:12px; font:14px/1.5 -apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif; color:var(--ink); background:#fff; }
+  h1 { font-size:16px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin-bottom:8px; }
+  .wrap { display:flex; gap:16px; flex-wrap:wrap; }
+  .left { flex:1 1 380px; min-width:300px; }
+  .right { flex:0 1 330px; min-width:280px; }
+  canvas { width:100%; height:240px; display:block; border:1px solid var(--line); border-radius:6px; cursor:ew-resize; touch-action:none; }
+  .ctrl { display:flex; align-items:center; gap:8px; margin:8px 0; flex-wrap:wrap; }
+  .ctrl input[type=range] { flex:1; min-width:160px; }
+  .thr { font-weight:bold; color:var(--accent); min-width:3.5em; }
+  button { border:1px solid var(--accent); background:#fff; color:var(--accent); border-radius:14px; padding:2px 10px; cursor:pointer; font-size:12px; }
+  button:hover, button.on { background:var(--accent); color:#fff; }
+  table.cm { border-collapse:collapse; width:100%; text-align:center; font-size:13px; }
+  table.cm th, table.cm td { border:1px solid var(--line); padding:6px; }
+  table.cm td.ok { background:#e8f5e9; } table.cm td.err { background:#ffebee; }
+  table.cm td b { font-size:18px; display:block; }
+  .metrics { margin-top:8px; }
+  .m { display:flex; align-items:center; gap:6px; margin:3px 0; font-size:13px; }
+  .m span.k { width:7.5em; }
+  .bar { flex:1; height:10px; background:#eceff1; border-radius:5px; overflow:hidden; }
+  .bar i { display:block; height:100%; background:var(--accent); }
+  .m span.v { width:4.2em; text-align:right; font-variant-numeric:tabular-nums; }
+  .legend { font-size:12px; color:var(--muted); }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin:0 3px 0 8px; vertical-align:-1px; }
+  .ex { margin-top:10px; font-size:12.5px; }
+  .ex li { margin:2px 0; }
+  .tag { display:inline-block; padding:0 5px; border-radius:3px; color:#fff; font-size:11px; margin-right:2px; }
+  .tag.g { background:var(--good); } .tag.b { background:var(--bad); }
+  .note { font-size:12px; color:var(--muted); margin-top:6px; }
+</style>
+</head>
+<body>
+<h1>阈值与混淆矩阵：拖一拖，看精确率和召回率怎样“此消彼长”</h1>
+<div class="sub">数据：实验 6-2 中逻辑回归对测试集 2398 条外卖评论给出的“好评概率”（实测）。好评概率 ≥ 阈值判为好评，否则判为差评。</div>
+<div class="wrap">
+  <div class="left">
+    <canvas id="hist" aria-label="好评概率分布直方图"></canvas>
+    <div class="legend">横轴：模型给出的好评概率；纵轴：评论条数。<i style="background:var(--bad)"></i>实际是差评<i style="background:var(--good)"></i>实际是好评　竖线：阈值（可拖动）</div>
+    <div class="ctrl">
+      <span>阈值</span>
+      <input id="t" type="range" min="0.05" max="0.95" step="0.01" value="0.5" aria-label="阈值">
+      <span class="thr" id="tv">0.50</span>
+    </div>
+    <div class="ctrl">
+      <span>按业务场景选：</span>
+      <button data-t="0.5" class="on">默认 0.5</button>
+      <button data-t="0.7">差评预警 0.7</button>
+      <button data-t="0.4">统计好评率 0.4</button>
+    </div>
+  </div>
+  <div class="right">
+    <table class="cm">
+      <tr><th></th><th>预测为差评</th><th>预测为好评</th></tr>
+      <tr><th>实际是差评</th><td class="ok">TP<b id="tp"></b>差评被找出</td><td class="err">FN<b id="fn"></b>差评被漏掉</td></tr>
+      <tr><th>实际是好评</th><td class="err">FP<b id="fp"></b>好评被误判</td><td class="ok">TN<b id="tn"></b>好评判对</td></tr>
+    </table>
+    <div class="metrics" id="metrics"></div>
+    <div class="note">以“差评”为正类，和教材 6.4 节一致。</div>
+  </div>
+</div>
+<div class="ex">
+  <b>阈值附近的评论</b>（模型最拿不准的几条，拖动阈值看它们的判断怎样翻转）：
+  <ul id="ex"></ul>
+</div>
+<script src="data.js"></script>
+<script>
+(function () {
+  var D = null, cv = document.getElementById("hist"), ctx = cv.getContext("2d");
+  var slider = document.getElementById("t"), tv = document.getElementById("tv");
+  var BINS = 20;
+
+  function metrics(t) {
+    var tp = 0, fn = 0, fp = 0, tn = 0;
+    for (var i = 0; i < D.p.length; i++) {
+      var predGood = D.p[i] >= t, good = D.y[i] === 1;
+      if (!good && !predGood) tp++; else if (!good && predGood) fn++;
+      else if (good && !predGood) fp++; else tn++;
+    }
+    return { tp: tp, fn: fn, fp: fp, tn: tn };
+  }
+
+  function draw(t) {
+    var dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    var pad = { l: 36, r: 10, t: 10, b: 24 }, w = W - pad.l - pad.r, h = H - pad.t - pad.b;
+    var bad = new Array(BINS).fill(0), good = new Array(BINS).fill(0);
+    for (var i = 0; i < D.p.length; i++) {
+      var b = Math.min(BINS - 1, Math.floor(D.p[i] * BINS));
+      (D.y[i] ? good : bad)[b]++;
+    }
+    var max = 0; for (i = 0; i < BINS; i++) max = Math.max(max, bad[i] + good[i]);
+    max = Math.ceil(max / 100) * 100;
+    ctx.strokeStyle = "#eceff1"; ctx.fillStyle = "#78909c"; ctx.font = "11px sans-serif"; ctx.textAlign = "right";
+    for (var g = 0; g <= max; g += max / 4) {
+      var y = pad.t + h - g / max * h;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + w, y); ctx.stroke();
+      ctx.fillText(g, pad.l - 4, y + 4);
+    }
+    var bw = w / BINS;
+    for (i = 0; i < BINS; i++) {
+      var x = pad.l + i * bw, hb = bad[i] / max * h, hg = good[i] / max * h;
+      ctx.fillStyle = "#e53935"; ctx.fillRect(x + 1, pad.t + h - hb, bw - 2, hb);
+      ctx.fillStyle = "#43a047"; ctx.fillRect(x + 1, pad.t + h - hb - hg, bw - 2, hg);
+    }
+    ctx.textAlign = "center"; ctx.fillStyle = "#78909c";
+    for (var k = 0; k <= 10; k += 2) ctx.fillText((k / 10).toFixed(1), pad.l + k / 10 * w, H - 6);
+    var tx = pad.l + t * w;
+    ctx.fillStyle = "rgba(63,81,181,.08)"; ctx.fillRect(pad.l, pad.t, tx - pad.l, h);
+    ctx.strokeStyle = "#3f51b5"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(tx, pad.t); ctx.lineTo(tx, pad.t + h); ctx.stroke(); ctx.lineWidth = 1;
+    ctx.fillStyle = "#3f51b5"; ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = tx < pad.l + w / 2 ? "left" : "right";
+    ctx.fillText("← 判为差评 | 判为好评 →", tx + (tx < pad.l + w / 2 ? 6 : -6), pad.t + 14);
+    cv._geom = { l: pad.l, w: w };
+  }
+
+  function pct(a, b) { return b ? a / b : 0; }
+
+  function update(t) {
+    t = Math.round(t * 100) / 100;
+    slider.value = t; tv.textContent = t.toFixed(2);
+    document.querySelectorAll("button[data-t]").forEach(function (b) { b.classList.toggle("on", +b.dataset.t === t); });
+    draw(t);
+    var m = metrics(t), n = D.p.length;
+    ["tp", "fn", "fp", "tn"].forEach(function (k) { document.getElementById(k).textContent = m[k]; });
+    var prec = pct(m.tp, m.tp + m.fp), rec = pct(m.tp, m.tp + m.fn), f1 = pct(2 * prec * rec, prec + rec);
+    var rows = [["准确率", pct(m.tp + m.tn, n)], ["差评的精确率", prec], ["差评的召回率", rec], ["差评的 F1", f1], ["好评的召回率", pct(m.tn, m.tn + m.fp)]];
+    document.getElementById("metrics").innerHTML = rows.map(function (r) {
+      return '<div class="m"><span class="k">' + r[0] + '</span><span class="bar"><i style="width:' + (r[1] * 100).toFixed(1) + '%"></i></span><span class="v">' + (r[1] * 100).toFixed(2) + '%</span></div>';
+    }).join("");
+    var near = D.ex.slice().sort(function (a, b) { return Math.abs(a[1] - t) - Math.abs(b[1] - t); }).slice(0, 5);
+    document.getElementById("ex").innerHTML = near.map(function (e) {
+      var pg = e[1] >= t, ok = pg === (e[2] === 1);
+      return "<li>“" + e[0].replace(/</g, "&lt;") + "” 好评概率 " + e[1].toFixed(2) + " → 判为 <span class='tag " + (pg ? "g" : "b") + "'>" + (pg ? "好评" : "差评") +
+        "</span>（实际 " + (e[2] ? "好评" : "差评") + "，" + (ok ? "判对" : "<b style='color:#c62828'>判错</b>") + "）</li>";
+    }).join("");
+  }
+
+  function fromEvent(ev) {
+    var r = cv.getBoundingClientRect(), g = cv._geom, x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+    return Math.min(0.95, Math.max(0.05, (x - g.l) / g.w));
+  }
+  var dragging = false;
+  cv.addEventListener("pointerdown", function (e) { dragging = true; update(fromEvent(e)); });
+  window.addEventListener("pointermove", function (e) { if (dragging) update(fromEvent(e)); });
+  window.addEventListener("pointerup", function () { dragging = false; });
+  slider.addEventListener("input", function () { update(+slider.value); });
+  document.querySelectorAll("button[data-t]").forEach(function (b) { b.addEventListener("click", function () { update(+b.dataset.t); }); });
+  window.addEventListener("resize", function () { update(+slider.value); });
+
+  D = window.SIM_DATA; update(0.5);
+})();
+</script>
+<script>
+// 嵌入教材页面时，把自身高度告诉外层页面，让 iframe 自动调整高度
+(function () {
+  if (window.parent === window) return;
+  function report() { window.parent.postMessage({ simHeight: Math.ceil(document.body.getBoundingClientRect().height) }, "*"); }
+  new ResizeObserver(report).observe(document.body);
+  window.addEventListener("load", report);
+})();
+</script>
+</body>
+</html>
