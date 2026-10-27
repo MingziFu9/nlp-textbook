@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>神经元与激活函数</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .in { display:grid; grid-template-columns:minmax(0,7.5em) 2em minmax(60px,1fr) 2.6em; gap:4px 8px; align-items:center; font-size:13px; }
+  .in label { display:flex; align-items:center; gap:4px; }
+  svg { width:100%; display:block; }
+  .eq { font-size:14px; margin-top:6px; line-height:1.9; }
+  .pt { cursor:default; }
+</style>
+</head>
+<body>
+<h1>神经元与激活函数：加权求和，再过一道“门”</h1>
+<div class="sub">左边是教材 8.2.1 节“周末看不看电影”的神经元：勾选输入、拖动权重和偏置，看输出怎样变化；换一个激活函数，看曲线形状。右边让感知机学“与”“或”“异或”。</div>
+
+<div class="grid2">
+  <div class="box">
+    <h2>① 一个神经元</h2>
+    <div class="in" id="ins"></div>
+    <div class="row"><span style="font-size:13px">激活函数：</span><span class="row" id="acts" style="margin:0"></span></div>
+    <svg id="act" viewBox="0 0 300 150"></svg>
+    <div class="eq" id="eq"></div>
+  </div>
+  <div class="box">
+    <h2>② 感知机学逻辑运算</h2>
+    <div class="row"><button data-g="and" class="on">与</button><button data-g="or">或</button><button data-g="xor">异或</button>
+      <span style="flex:1"></span><button class="main" id="ep">训练一轮</button><button id="ep10">训练 10 轮</button><button id="pr">重置</button></div>
+    <svg id="plane" viewBox="-0.6 -1.6 2.2 2.2"></svg>
+    <div class="eq" id="pinfo"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ① 单个神经元
+  var X = [1, 0, 1], Wt = [0.6, 0.3, 0.1], B = -0.5, act = "step";
+  var NAMES = ["有好电影 x₁", "有朋友一起 x₂", "天气好 x₃"];
+  var F = {
+    step: { n:"阶跃", f:function (z) { return z > 0 ? 1 : 0; }, lo:-0.2, hi:1.2, say:"大于 0 输出 1（去），否则输出 0（不去）。感知机用的就是它。" },
+    sigmoid: { n:"Sigmoid", f:function (z) { return 1 / (1 + Math.exp(-z)); }, lo:-0.2, hi:1.2, say:"输出 0 到 1 之间，可以理解为“去的概率”。" },
+    tanh: { n:"Tanh", f:Math.tanh, lo:-1.2, hi:1.2, say:"输出 −1 到 1，以 0 为中心，RNN 的隐藏状态常用它。" },
+    relu: { n:"ReLU", f:function (z) { return Math.max(0, z); }, lo:-0.5, hi:3.2, say:"小于 0 输出 0，大于 0 原样输出，隐藏层最常用。" }
+  };
+  var ins = document.getElementById("ins");
+  ins.innerHTML = NAMES.map(function (n, i) {
+    return '<label><input type="checkbox" data-i="' + i + '"' + (X[i] ? " checked" : "") + "> " + n + '</label><span>w' + (i + 1) + '</span><input type="range" min="-1" max="1" step="0.05" value="' + Wt[i] + '" data-w="' + i + '"><b id="wv' + i + '"></b>';
+  }).join("") + '<span>偏置（门槛）</span><span>b</span><input type="range" min="-2" max="2" step="0.05" value="' + B + '" id="bb"><b id="bv"></b>';
+  ins.querySelectorAll("input[type=checkbox]").forEach(function (c) { c.onchange = function () { X[+c.dataset.i] = c.checked ? 1 : 0; drawN(); }; });
+  ins.querySelectorAll("input[data-w]").forEach(function (r) { r.oninput = function () { Wt[+r.dataset.w] = +r.value; drawN(); }; });
+  document.getElementById("bb").oninput = function (e) { B = +e.target.value; drawN(); };
+  document.getElementById("acts").innerHTML = Object.keys(F).map(function (k) { return '<button data-a="' + k + '"' + (k === act ? ' class="on"' : "") + ">" + F[k].n + "</button>"; }).join("");
+  document.querySelectorAll("#acts button").forEach(function (b) { b.onclick = function () { act = b.dataset.a; document.querySelectorAll("#acts button").forEach(function (x) { x.classList.toggle("on", x === b); }); drawN(); }; });
+  function drawN() {
+    Wt.forEach(function (w, i) { document.getElementById("wv" + i).textContent = w.toFixed(2); });
+    document.getElementById("bv").textContent = B.toFixed(2);
+    var z = X[0] * Wt[0] + X[1] * Wt[1] + X[2] * Wt[2] + B, a = F[act], y = a.f(z);
+    var W = 300, H = 150, zx = function (v) { return 20 + (v + 3) / 6 * (W - 30); }, yy = function (v) { return H - 18 - (v - a.lo) / (a.hi - a.lo) * (H - 28); };
+    var p = []; for (var v = -3; v <= 3.001; v += 0.05) p.push(zx(v) + "," + yy(a.f(v)));
+    var s = '<line x1="' + zx(-3) + '" y1="' + yy(0) + '" x2="' + zx(3) + '" y2="' + yy(0) + '" stroke="#cfd8dc"/><line x1="' + zx(0) + '" y1="8" x2="' + zx(0) + '" y2="' + (H - 18) + '" stroke="#cfd8dc"/>' +
+      '<polyline points="' + p.join(" ") + '" fill="none" stroke="#3f51b5" stroke-width="2.5"/>';
+    [-3, -2, -1, 0, 1, 2, 3].forEach(function (t) { s += '<text x="' + zx(t) + '" y="' + (H - 4) + '" font-size="10" text-anchor="middle" fill="#78909c">' + t + "</text>"; });
+    var zc = Math.max(-3, Math.min(3, z));
+    s += '<line x1="' + zx(zc) + '" y1="' + yy(0) + '" x2="' + zx(zc) + '" y2="' + yy(a.f(zc)) + '" stroke="#e53935" stroke-dasharray="3 3"/><circle cx="' + zx(zc) + '" cy="' + yy(a.f(zc)) + '" r="5" fill="#e53935"/>';
+    s += '<text x="' + (W - 6) + '" y="' + (yy(0) - 4) + '" font-size="10" text-anchor="end" fill="#78909c">z</text>';
+    document.getElementById("act").innerHTML = s;
+    document.getElementById("eq").innerHTML = "z = " + X.map(function (x, i) { return Wt[i].toFixed(2) + "×" + x; }).join(" + ") + " + (" + B.toFixed(2) + ") = <b>" + z.toFixed(2) + "</b><br>y = " + a.n + "(" + z.toFixed(2) + ") = <b class='big'>" + y.toFixed(2) + "</b><div class='note' style='margin:0'>" + a.say + "</div>";
+  }
+  drawN();
+
+  // ② 感知机：w ← w + η(y − ŷ)x
+  var G = { and:[0,0,0,1], or:[0,1,1,1], xor:[0,1,1,0] }, PTS = [[0,0],[0,1],[1,0],[1,1]], g = "and", w, b, ep, eta = 0.1, hist;
+  function resetP() { w = [0.2, -0.3]; b = 0; ep = 0; hist = []; drawP(); }
+  function predict(p) { return w[0] * p[0] + w[1] * p[1] + b > 0 ? 1 : 0; }
+  function epoch() {
+    var errs = 0;
+    PTS.forEach(function (p, i) { var e = G[g][i] - predict(p); if (e) { errs++; w[0] += eta * e * p[0]; w[1] += eta * e * p[1]; b += eta * e; } });
+    ep++; hist.push(errs);
+  }
+  function drawP() {
+    var s = '<rect x="-0.6" y="-1.6" width="2.2" height="2.2" fill="#fafafa"/>';
+    // 被判为 1 的区域
+    var line = "";
+    if (Math.abs(w[1]) > 1e-9 || Math.abs(w[0]) > 1e-9) {
+      var pts = [];
+      for (var gx = -0.6; gx <= 1.6; gx += 0.05) for (var gy = -0.6; gy <= 1.6; gy += 0.05) if (w[0] * gx + w[1] * gy + b > 0) pts.push('<rect x="' + gx.toFixed(2) + '" y="' + (-gy - 0.05).toFixed(2) + '" width="0.051" height="0.051" fill="#c8e6c9"/>');
+      s += pts.join("");
+      if (Math.abs(w[1]) > 1e-9) { var y1 = -(w[0] * -0.6 + b) / w[1], y2 = -(w[0] * 1.6 + b) / w[1]; line = '<line x1="-0.6" y1="' + (-y1) + '" x2="1.6" y2="' + (-y2) + '" stroke="#3f51b5" stroke-width="0.03"/>'; }
+      else { var xx = -b / w[0]; line = '<line x1="' + xx + '" y1="-1.6" x2="' + xx + '" y2="0.6" stroke="#3f51b5" stroke-width="0.03"/>'; }
+    }
+    s += line + '<line x1="-0.6" y1="0" x2="1.6" y2="0" stroke="#90a4ae" stroke-width="0.01"/><line x1="0" y1="-1.6" x2="0" y2="0.6" stroke="#90a4ae" stroke-width="0.01"/>';
+    PTS.forEach(function (p, i) {
+      var t = G[g][i], ok = predict(p) === t;
+      s += '<circle cx="' + p[0] + '" cy="' + (-p[1]) + '" r="0.09" fill="' + (t ? "#43a047" : "#fff") + '" stroke="' + (ok ? "#263238" : "#e53935") + '" stroke-width="' + (ok ? 0.02 : 0.05) + '"/>' +
+        '<text x="' + (p[0] + 0.13) + '" y="' + (-p[1] + 0.05) + '" font-size="0.13" fill="#263238">(' + p[0] + "," + p[1] + ")→" + t + "</text>";
+    });
+    document.getElementById("plane").innerHTML = s;
+    var wrong = PTS.filter(function (p, i) { return predict(p) !== G[g][i]; }).length;
+    document.getElementById("pinfo").innerHTML = "w₁ = " + w[0].toFixed(2) + "，w₂ = " + w[1].toFixed(2) + "，b = " + b.toFixed(2) + "（学习率 η = 0.1）<br>已训练 <b>" + ep + "</b> 轮，现在错 <b class='" + (wrong ? "bad" : "ok") + "'>" + wrong + "</b> 个点。" +
+      (wrong === 0 ? " <span class='ok'>学会了！绿色区域里的点输出 1。</span>" : g === "xor" && ep >= 10 ? " <span class='bad'>异或的两个 1 在对角线两端，一条直线永远分不开，所以感知机怎么调都学不会（线性不可分）。</span>" : "") +
+      "<div class='note' style='margin:0'>实心绿点应输出 1，空心点应输出 0；红圈是现在判错的点。蓝线就是 w₁x₁ + w₂x₂ + b = 0。</div>";
+  }
+  document.querySelectorAll("[data-g]").forEach(function (bt) { bt.onclick = function () { g = bt.dataset.g; document.querySelectorAll("[data-g]").forEach(function (x) { x.classList.toggle("on", x === bt); }); resetP(); }; });
+  document.getElementById("ep").onclick = function () { epoch(); drawP(); };
+  document.getElementById("ep10").onclick = function () { for (var i = 0; i < 10; i++) epoch(); drawP(); };
+  document.getElementById("pr").onclick = resetP;
+  resetP();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

@@ -231,6 +231,11 @@ $$
 
 最后，每个查询词的得分还要乘上它的 IDF，再把所有查询词的得分加起来，就得到文章的总分。BM25 不需要训练，计算很快，对专有名词、产品型号、法条编号这类“必须字面一致”的查询非常可靠，这也是它在大模型时代仍被广泛使用的原因。
 
+<iframe class="sim-frame" src="../../sims/tfidf-calculator/main.html" height="900" loading="lazy" title="TF-IDF 计算器"></iframe>
+
+**交互动画：TF-IDF 计算器**。选一篇“文章”，表格会列出每个词的 TF、IDF 和 TF-IDF，可以直接修改文章内容；下半部分拖动滑块，看 BM25 的词频得分怎样“饱和”。[全屏打开](../../sims/tfidf-calculator/main.html){ target=_blank } · [教学说明](../../sims/tfidf-calculator/index.md)
+{ .sim-caption }
+
 ## 5.5 文本相似度
 
 有了文本向量，就可以计算两段文本有多相似。最常用的方法是[**余弦相似度**](../../appendix/e-glossary.md#g-余弦相似度 "用两个向量夹角的余弦值衡量其相似程度，取值 -1 到 1"){ .term }（Cosine Similarity）。
@@ -361,6 +366,11 @@ $$
 意思是：“国王”和“男人”的差别，与“女王”和“女人”的差别是一样的（都是“王室身份”）。实验中，我们用网购评论训练的词向量计算“酒店 + 电池 − 手机”，得到的最相近的词是“酒店设施”“服务”，可以理解为“电池之于手机，相当于设施、服务之于酒店”。
 
 **3. 找出不合群的词。** 在“香蕉、苹果、橙子、键盘”中，模型能找出“键盘”不属于同一类。
+
+<iframe class="sim-frame" src="../../sims/word-vectors/main.html" height="820" loading="lazy" title="词向量与余弦相似度"></iframe>
+
+**交互动画：词向量与余弦相似度**。左边拖动两支箭头，看夹角和余弦相似度；右边在词语地图上找近义词、做“国王 − 男人 + 女人”的类比、找出不合群的词。[全屏打开](../../sims/word-vectors/main.html){ target=_blank } · [教学说明](../../sims/word-vectors/index.md)
+{ .sim-caption }
 
 ### 5.6.5 词向量的局限
 

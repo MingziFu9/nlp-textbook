@@ -302,6 +302,11 @@ $$
 
 BLEU 的取值在 0 到 1 之间，论文和报告中也常乘以 100 表示。一般来说，BLEU 在 30 以上（即 0.3）的译文基本可以理解，40 以上质量较好。但不同语言对、不同测试集的 BLEU 不能直接比较。
 
+<iframe class="sim-frame" src="../../sims/bleu-calculator/main.html" height="760" loading="lazy" title="BLEU 计算器"></iframe>
+
+**交互动画：BLEU 计算器**。选一个待评价译文，或者自己改写，看 1~4 元精确率、简短惩罚和 BLEU 怎样变化。绿色是命中参考译文的 n 元组。[全屏打开](../../sims/bleu-calculator/main.html){ target=_blank } · [教学说明](../../sims/bleu-calculator/index.md)
+{ .sim-caption }
+
 ### 10.5.3 BLEU 的局限与新的评价方法
 
 BLEU 简单、快速、可重复，但它只看“字面上”的重合，有明显的局限：
@@ -366,6 +371,11 @@ flowchart LR
 
 每一步保留概率最高的 \(k\) 个候选序列（\(k\) 为束宽），最后选出整体概率最高的序列。束搜索比贪心搜索更“有远见”，在机器翻译、摘要等**有标准答案**的任务中效果好。但在开放式写作中，束搜索倾向于生成平淡、保守、重复的文字。
 
+<iframe class="sim-frame" src="../../sims/beam-search/main.html" height="640" loading="lazy" title="贪心与束搜索"></iframe>
+
+**交互动画：贪心与束搜索**。束宽为 1 就是贪心搜索。分别用束宽 1、2、3 走完三步，比较最后选出的句子和整句概率。[全屏打开](../../sims/beam-search/main.html){ target=_blank } · [教学说明](../../sims/beam-search/index.md)
+{ .sim-caption }
+
 **③ 随机采样与温度**
 
 按照概率分布随机抽取下一个词：概率 0.35 的词有 35% 的机会被选中，概率 0.05 的词也有 5% 的机会。这样每次生成的结果都不同，更有创意，更像人写的文字。
@@ -390,6 +400,11 @@ $$
 把词按概率从高到低排列，从最高的开始累加，直到累计概率达到 \(p\)（比如 0.9），只在这些词中抽取。这样，候选词的数量会随着模型的“把握程度”自动调整：有把握时只有一两个候选，没把握时候选多一些。Top-p 是目前大模型最常用的采样方法之一。
 
 此外，还有**重复惩罚**（降低已经出现过的词的概率）、**最大长度**、**停止词**等参数，用来控制生成的质量和长度。
+
+<iframe class="sim-frame" src="../../sims/temperature-sampling/main.html" height="760" loading="lazy" title="温度与 Top-p 采样"></iframe>
+
+**交互动画：温度与 Top-p 采样**。调节温度、Top-k、Top-p，看“味道”后面下一个字的概率怎样变化、哪些字被排除；点“抽 20 次”看实际抽到的字。四个按钮对应下面表格中的建议设置。[全屏打开](../../sims/temperature-sampling/main.html){ target=_blank } · [教学说明](../../sims/temperature-sampling/index.md)
+{ .sim-caption }
 
 **参数设置建议**：
 

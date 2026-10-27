@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>依存句法树</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  svg { width:100%; display:block; }
+  .lane { display:flex; gap:6px; align-items:center; flex-wrap:wrap; min-height:34px; }
+  .lane .lbl { width:4.5em; font-size:12.5px; color:var(--muted); }
+  .w { padding:3px 9px; border-radius:5px; background:#eceff1; border:1px solid var(--line); }
+  .w.root { background:#263238; color:#fff; }
+  .w.top { border:2px solid var(--accent); }
+  .acts button { min-width:7em; }
+  .hist { font-size:12.5px; max-height:150px; overflow:auto; }
+  .hist div { padding:1px 0; }
+</style>
+</head>
+<body>
+<h1>依存句法树：你来当“分析器”</h1>
+<div class="sub">用 4.3.4 节的“栈”方法（arc-standard）一步步搭出依存树。你可以自己选动作，答错会提示；也可以点“自动走一步”看标准做法。</div>
+
+<div class="row ex" id="ex"></div>
+<svg id="tree" viewBox="0 0 600 170" aria-label="依存弧"></svg>
+<div class="box">
+  <div class="lane"><span class="lbl">栈</span><span id="stack" class="lane"></span><span class="note" style="margin:0">← 右边是栈顶</span></div>
+  <div class="lane"><span class="lbl">缓冲区</span><span id="buf" class="lane"></span></div>
+</div>
+<div class="row acts">
+  <button id="sh">移进 SHIFT</button><button id="la">左弧 LEFT-ARC</button><button id="ra">右弧 RIGHT-ARC</button>
+  <span style="flex:1"></span><button class="main" id="auto">自动走一步</button><button id="reset">重来</button>
+</div>
+<div class="msg" id="msg"></div>
+<div class="box hist"><b style="font-size:13px">步骤记录</b><div id="hist"></div></div>
+<div class="note">弧从中心词指向依存词，标签含义见教材 4.3.2 节：nsubj 主语、dobj 宾语、amod 形容词修饰、advmod 状语、nmod 名词性修饰、case 介词、aux:asp 体态助词、nummod 数量修饰、mark:clf 量词。</div>
+
+<script>
+(function () {
+  // 每个词：[词, 中心词序号（0 是 ROOT）, 关系]
+  var SENTS = [
+    { name:"华为发布了新款手机", w:[["华为",2,"nsubj"],["发布",0,"root"],["了",2,"aux:asp"],["新款",5,"amod"],["手机",2,"dobj"]] },
+    { name:"我在图书馆认真阅读", w:[["我",5,"nsubj"],["在",3,"case"],["图书馆",5,"nmod"],["认真",5,"advmod"],["阅读",0,"root"]] },
+    { name:"小明买了一本书", w:[["小明",2,"nsubj"],["买",0,"root"],["了",2,"aux:asp"],["一",5,"nummod"],["本",6,"mark:clf"],["书",2,"dobj"]] }
+  ];
+  var S, stack, buf, arcs, hist, n = 0;
+  var NAMES = { SH:"移进", LA:"左弧", RA:"右弧" };
+
+  function load(i) { S = SENTS[i]; stack = [0]; buf = S.w.map(function (_, k) { return k + 1; }); arcs = {}; hist = []; say(""); draw(); }
+  function head(k) { return S.w[k - 1][1]; }
+  function lab(k) { return S.w[k - 1][2]; }
+  function word(k) { return k === 0 ? "ROOT" : S.w[k - 1][0]; }
+  // 标准答案：能左弧就左弧；栈顶的依存词都挂好了才能右弧；否则移进
+  function oracle() {
+    if (stack.length >= 2) {
+      var s1 = stack[stack.length - 1], s2 = stack[stack.length - 2];
+      if (s2 !== 0 && head(s2) === s1) return "LA";
+      if (head(s1) === s2) {
+        var pending = S.w.some(function (x, k) { return x[1] === s1 && !arcs[k + 1]; });
+        if (!pending) return "RA";
+      }
+    }
+    return buf.length ? "SH" : null;
+  }
+  function legal(a) { return a === "SH" ? buf.length > 0 : a === "LA" ? stack.length > 2 : stack.length >= 2; }
+  function apply(a) {
+    var s1 = stack[stack.length - 1], s2 = stack[stack.length - 2], txt;
+    if (a === "SH") { stack.push(buf.shift()); txt = "移进“" + word(stack[stack.length - 1]) + "”"; }
+    if (a === "LA") { arcs[s2] = s1; stack.splice(stack.length - 2, 1); txt = word(s2) + " ← " + word(s1) + "（" + lab(s2) + "）"; }
+    if (a === "RA") { arcs[s1] = s2; stack.pop(); txt = word(s2) + " → " + word(s1) + "（" + lab(s1) + "）"; }
+    hist.push((hist.length + 1) + ". " + NAMES[a] + "：" + txt);
+  }
+  function why(a, good) {
+    var s1 = stack[stack.length - 1], s2 = stack[stack.length - 2];
+    if (!legal(a)) return a === "SH" ? "缓冲区已经空了，不能再移进。" : "栈里的词不够，不能做这个动作。";
+    if (a === "LA") return "“" + word(s2) + "”的中心词不是“" + word(s1) + "”，不能左弧。";
+    if (a === "RA" && head(s1) !== s2) return "“" + word(s1) + "”的中心词不是“" + word(s2) + "”，不能右弧。";
+    if (a === "RA") return "“" + word(s1) + "”还有依存词没挂上（在缓冲区里），现在右弧就把它拿走了，后面的词找不到它。";
+    if (a === "SH") return "现在栈顶两个词之间已经有依存关系了，应该先建立它。";
+    return "";
+  }
+  function act(a) {
+    var good = oracle();
+    if (!good) return;
+    if (a !== good) { say("<span class='bad'>✗ " + why(a, good) + "</span> 正确的动作是：<b>" + NAMES[good] + "</b>。"); return; }
+    apply(a); n++;
+    var next = oracle();
+    say(next ? "<span class='ok'>✓ 正确。</span>" : "<span class='ok'>✓ 完成！共 " + hist.length + " 步（" + S.w.length + " 个词 × 2）。每个词都找到了自己的中心词，依存树建好了。</span>");
+    draw();
+  }
+  function say(h) { document.getElementById("msg").innerHTML = h; }
+
+  function draw() {
+    var N = S.w.length, W = 600, gap = W / (N + 1), y = 150, svg = "";
+    var X = function (k) { return gap * (k + 0.5); };
+    svg += '<text x="' + X(0) + '" y="' + y + '" text-anchor="middle" font-size="13" fill="#78909c">ROOT</text>';
+    S.w.forEach(function (x, i) {
+      var k = i + 1, inStack = stack.indexOf(k) >= 0, done = k in arcs;
+      svg += '<text x="' + X(k) + '" y="' + y + '" text-anchor="middle" font-size="17" fill="' + (done ? "#263238" : inStack ? "#3f51b5" : "#90a4ae") + '" font-weight="' + (inStack ? "bold" : "normal") + '">' + x[0] + "</text>";
+    });
+    Object.keys(arcs).forEach(function (d) {
+      d = +d; var h = arcs[d], x1 = X(h), x2 = X(d), dist = Math.abs(d - h), top = y - 22 - dist * 22;
+      svg += '<path d="M' + x1 + "," + (y - 18) + " C" + x1 + "," + top + " " + x2 + "," + top + " " + x2 + "," + (y - 18) + '" fill="none" stroke="#3f51b5" stroke-width="1.6" marker-end="url(#ah)"/>';
+      svg += '<text x="' + (x1 + x2) / 2 + '" y="' + (y - 18 + 0.75 * (top - y + 18) + 4) + '" text-anchor="middle" font-size="12" fill="#ef6c00" stroke="#fff" stroke-width="4" paint-order="stroke">' + lab(d) + "</text>";
+    });
+    document.getElementById("tree").innerHTML = '<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3f51b5"/></marker></defs>' + svg;
+    document.getElementById("stack").innerHTML = stack.map(function (k, i) { return '<span class="w' + (k === 0 ? " root" : "") + (i === stack.length - 1 ? " top" : "") + '">' + word(k) + "</span>"; }).join("");
+    document.getElementById("buf").innerHTML = buf.map(function (k) { return '<span class="w">' + word(k) + "</span>"; }).join("") || '<span class="note" style="margin:0">（空）</span>';
+    document.getElementById("hist").innerHTML = hist.map(function (h) { return "<div>" + h + "</div>"; }).join("") || "<div class='note' style='margin:0'>第 0 步：栈里只有 ROOT，所有词都在缓冲区。</div>";
+    var over = !oracle();
+    ["sh", "la", "ra", "auto"].forEach(function (id) { document.getElementById(id).disabled = over; });
+  }
+  document.getElementById("ex").innerHTML = "<span class='lbl'>句子：</span>" + SENTS.map(function (s, i) { return "<button data-i='" + i + "'>" + s.name + "</button>"; }).join("");
+  document.querySelectorAll("#ex button").forEach(function (b) { b.onclick = function () { load(+b.dataset.i); }; });
+  document.getElementById("sh").onclick = function () { act("SH"); };
+  document.getElementById("la").onclick = function () { act("LA"); };
+  document.getElementById("ra").onclick = function () { act("RA"); };
+  document.getElementById("auto").onclick = function () { var a = oracle(); if (a) act(a); };
+  document.getElementById("reset").onclick = function () { load(SENTS.indexOf(S)); };
+  load(0);
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

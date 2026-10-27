@@ -265,6 +265,11 @@ print(eliza("我一点也不难过"))        # 输出：你为什么觉得难过
 
 需要强调的是，新方法并没有让旧方法完全消失。在数据少、要求速度快、成本低或者结果必须可解释的场景下，规则和统计方法依然很常用。本书会把经典方法和大模型方法放在一起讲，让你知道什么场合用什么工具。
 
+<iframe class="sim-frame" src="../../sims/nlp-timeline/main.html" height="760" loading="lazy" title="NLP 发展时间线"></iframe>
+
+**交互动画：NLP 发展时间线**。点时代卡片或时间轴上的圆点，看四个时代的大事件和思路；每个时代下面都有一个小实验，用同一句“我一点也不难过”体验不同方法的差别。[全屏打开](../../sims/nlp-timeline/main.html){ target=_blank } · [教学说明](../../sims/nlp-timeline/index.md)
+{ .sim-caption }
+
 ## 1.3 NLP 的主要任务
 
 NLP 的任务可以按“由浅入深”分为几个层次，就像我们学语文：先认字词，再分析句子，再理解意思，最后读写文章。

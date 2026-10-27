@@ -48,8 +48,25 @@ nav:
   - "第 12 章 NLP 的伦理、安全与法律": chapters/12-ethics/index.md
   - 交互动画:
     - sims/index.md
+    - "NLP 发展时间线": sims/nlp-timeline/index.md
+    - "文本清洗流水线": sims/cleaning-pipeline/index.md
+    - "最大匹配分词": sims/max-match/index.md
+    - "BPE 合并过程": sims/bpe-merge/index.md
+    - "依存句法树": sims/dependency-parser/index.md
+    - "TF-IDF 计算器": sims/tfidf-calculator/index.md
+    - "词向量与余弦相似度": sims/word-vectors/index.md
     - "阈值与混淆矩阵": sims/threshold-confusion/index.md
     - "情感词典打分演示": sims/lexicon-scorer/index.md
+    - "BIO 标注练习": sims/bio-tagging/index.md
+    - "神经元与激活函数": sims/neuron-activation/index.md
+    - "RNN 逐步展开": sims/rnn-unroll/index.md
+    - "自注意力热力图": sims/self-attention/index.md
+    - "BLEU 计算器": sims/bleu-calculator/index.md
+    - "贪心与束搜索": sims/beam-search/index.md
+    - "温度与 Top-p 采样": sims/temperature-sampling/index.md
+    - "RAG 切块实验": sims/rag-chunking/index.md
+    - "ReAct 执行回放": sims/react-replay/index.md
+    - "脱敏与提示注入攻防": sims/privacy-injection/index.md
   - 附录:
     - "附录 A Python 速查": appendix/a-python.md
     - "附录 B NLP 工具库接口速查": appendix/b-libraries.md

@@ -201,6 +201,11 @@ flowchart LR
 
 Softmax 值得多说几句。假设一个三分类的新闻分类器，输出层给“体育、财经、科技”的原始得分是 \(2.0, 1.0, 0.1\)。Softmax 先对每个得分求 \(e\) 的幂，得到约 \(7.39, 2.72, 1.11\)，再各自除以总和 \(11.22\)，得到概率约 \(0.66, 0.24, 0.10\)。得分越高，概率越大，而且三者加起来正好是 1。大模型在生成每一个字时，也是用 Softmax 把几万个候选词的得分变成概率，再从中挑选（第 10 章）。
 
+<iframe class="sim-frame" src="../../sims/neuron-activation/main.html" height="760" loading="lazy" title="神经元与激活函数"></iframe>
+
+**交互动画：神经元与激活函数**。左边是“周末看不看电影”的神经元，勾选输入、拖动权重和偏置，换不同的激活函数；右边让感知机学“与”“或”“异或”，体会线性不可分。[全屏打开](../../sims/neuron-activation/main.html){ target=_blank } · [教学说明](../../sims/neuron-activation/index.md)
+{ .sim-caption }
+
 ### 8.2.5 神经网络如何学习
 
 训练神经网络就是**不断调整权重，让预测越来越准**。<sup class="cite">[[1]](#ref8-1)</sup><sup class="cite">[[2]](#ref8-2)</sup>这个过程包括四个环节，循环往复：
@@ -421,6 +426,11 @@ flowchart LR
 这意味着：**距离结尾越远的词，对参数更新的影响越小**，网络根本“学不到”远处的词和结果之间的关系。反过来，如果每一步乘的数大于 1，梯度会越来越大，导致**梯度爆炸**，训练直接崩溃。梯度爆炸比较容易处理，常用**梯度裁剪**（Gradient Clipping），给梯度设一个上限；梯度消失则需要改造网络结构。
 
 实验 8-3 中，你会亲手测量梯度消失：当序列长度为 50 时，普通 RNN 传回第一个词的梯度还不到最后一个词的一万亿分之一。
+
+<iframe class="sim-frame" src="../../sims/rnn-unroll/main.html" height="700" loading="lazy" title="RNN 逐步展开"></iframe>
+
+**交互动画：RNN 逐步展开**。每点一次“读下一个词”，RNN 就用同一套参数更新一次隐藏状态。读第二个例句并调节“记忆系数”，看开头的“难吃”是怎样被逐渐忘掉的。[全屏打开](../../sims/rnn-unroll/main.html){ target=_blank } · [教学说明](../../sims/rnn-unroll/index.md)
+{ .sim-caption }
 
 ## 8.5 LSTM 与 GRU
 

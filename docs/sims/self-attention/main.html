@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自注意力热力图</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  table.hm { border-collapse:collapse; font-size:12px; }
+  table.hm td, table.hm th { width:44px; height:30px; text-align:center; border:1px solid #fff; }
+  table.hm th { font-weight:normal; color:var(--muted); background:#fff; }
+  table.hm th.q { cursor:pointer; color:var(--ink); }
+  table.hm tr.sel th.q { color:#fff; background:var(--accent); border-radius:4px; }
+  table.hm tr.sel td { outline:2px solid var(--accent); outline-offset:-2px; }
+  .vec { display:grid; grid-template-columns:5.5em 1fr 2.8em; gap:4px 6px; align-items:center; font-size:12.5px; }
+  .calc { font-size:13px; line-height:1.8; }
+  .sl { display:grid; grid-template-columns:8em 1fr 3em; gap:6px; align-items:center; font-size:13px; }
+</style>
+</head>
+<body>
+<h1>自注意力热力图：“它”在看谁？</h1>
+<div class="sub">数据和实验 9-1 第 1 部分相同：8 个词、4 维手工词向量，Q = K = V = 词向量。每一行是一个词（Query）对所有词（Key）的注意力权重，每行加起来等于 1。点左边的词，看这一行是怎样算出来的。</div>
+
+<div class="grid2">
+  <div class="box" style="overflow-x:auto">
+    <table class="hm" id="hm"></table>
+    <div class="row" style="font-size:12.5px">
+      <label><input type="checkbox" id="mask"> 掩码：不许看后面的词（GPT 式，9.2.4 节）</label>
+    </div>
+    <div class="sl"><span>得分放大倍数</span><input type="range" id="amp" min="0.5" max="8" step="0.5" value="1"><b id="ampv"></b></div>
+    <div class="note" style="margin:0">放大倍数 = 1 就是标准公式（除以 √d = 2）。调大相当于“不除以 √d”或向量维度很大：权重会集中到少数几个词上。</div>
+  </div>
+  <div class="box">
+    <h2 id="qt"></h2>
+    <div class="vec" id="vec"></div>
+    <div class="calc" id="calc"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var words = ["小猫","追","老鼠","，","它","跑","累","了"];
+  var DIMS = ["动物","动作","代词","标点/虚词"];
+  var X0 = [[1,0,0.3,0],[0,1,0,0],[0.8,0,0,0],[0,0,0,1],[0.6,0,1,0],[0,0.9,0,0],[0,0.7,0,0.2],[0,0,0,0.8]];
+  var X = X0.map(function (r) { return r.slice(); }), sel = 4;
+  function dot(a, b) { return a.reduce(function (s, v, i) { return s + v * b[i]; }, 0); }
+  function att() {
+    var amp = +document.getElementById("amp").value, mask = document.getElementById("mask").checked;
+    var S = X.map(function (q, i) { return X.map(function (k, j) { return mask && j > i ? -Infinity : dot(q, k) / 2 * amp; }); });
+    var A = S.map(function (row) { var m = Math.max.apply(null, row), e = row.map(function (z) { return z === -Infinity ? 0 : Math.exp(z - m); }), s = e.reduce(function (a, b) { return a + b; }); return e.map(function (v) { return v / s; }); });
+    return { S:S, A:A, amp:amp };
+  }
+  function draw() {
+    var r = att(), A = r.A;
+    document.getElementById("ampv").textContent = "×" + r.amp;
+    var h = "<tr><th></th>" + words.map(function (w) { return "<th>" + w + "</th>"; }).join("") + "</tr>";
+    A.forEach(function (row, i) {
+      h += '<tr' + (i === sel ? ' class="sel"' : "") + '><th class="q" data-i="' + i + '">' + words[i] + "</th>" + row.map(function (v) {
+        var a = Math.min(1, v * 1.6); return '<td style="background:rgba(63,81,181,' + a.toFixed(3) + ");color:" + (a > 0.5 ? "#fff" : "#263238") + '">' + (v ? v.toFixed(2) : "—") + "</td>";
+      }).join("") + "</tr>";
+    });
+    document.getElementById("hm").innerHTML = h + '<tr><th></th><th colspan="8" style="color:#78909c">↑ 被关注的词（Key）；左边是当前词（Query），可以点</th></tr>';
+    document.querySelectorAll("th.q").forEach(function (t) { t.onclick = function () { sel = +t.dataset.i; drawSel(); draw(); }; });
+    // 右侧：选中词的三步计算
+    var q = X[sel], row = A[sel], out = [0, 1, 2, 3].map(function (d) { return row.reduce(function (s, a, j) { return s + a * X[j][d]; }, 0); });
+    var order = words.map(function (w, j) { return j; }).sort(function (a, b) { return row[b] - row[a]; });
+    document.getElementById("calc").innerHTML =
+      "<b>① 打分</b>：Q·K ÷ √4" + (r.amp !== 1 ? " × " + r.amp : "") + "<br>" + order.slice(0, 4).map(function (j) { return words[j] + " " + (r.S[sel][j] === -Infinity ? "（被遮住）" : r.S[sel][j].toFixed(2)); }).join("，") + "……" +
+      "<br><b>② Softmax 归一化</b>：<br>" + order.map(function (j) { return '<div class="barrow"><span>' + words[j] + '</span><div><div class="bar" style="width:' + (row[j] * 100).toFixed(1) + '%"></div></div><span class="v">' + row[j].toFixed(3) + "</span></div>"; }).join("") +
+      "<b>③ 加权求和</b>：把所有词的 V 按上面的权重混合<br>“" + words[sel] + "”原来 = [" + q.map(function (v) { return v.toFixed(2); }).join(", ") + "]<br>融合上下文后 = [" + out.map(function (v) { return v.toFixed(2); }).join(", ") + "]" +
+      (sel === 4 && r.amp === 1 && !document.getElementById("mask").checked && X[4].join() === X0[4].join() ? "<div class='note' style='margin:0'>和实验 9-1 的输出一致：它 0.201、小猫 0.160、老鼠 0.130……“它”除了自己，最关注“小猫”。</div>" : "");
+  }
+  function drawSel() {
+    document.getElementById("qt").textContent = "“" + words[sel] + "”这一行是怎么算出来的";
+    document.getElementById("vec").innerHTML = DIMS.map(function (d, k) { return "<span>" + d + '</span><input type="range" min="0" max="1" step="0.1" value="' + X[sel][k] + '" data-k="' + k + '"><b>' + X[sel][k].toFixed(1) + "</b>"; }).join("") +
+      '<span></span><span class="note" style="margin:0">拖动可以修改这个词的向量</span><button id="rv" style="font-size:11px;padding:1px 6px;white-space:nowrap">还原</button>';
+    document.querySelectorAll("#vec input").forEach(function (inp) { inp.oninput = function () { X[sel][+inp.dataset.k] = +inp.value; inp.nextElementSibling.textContent = (+inp.value).toFixed(1); draw(); }; });
+    document.getElementById("rv").onclick = function () { X[sel] = X0[sel].slice(); drawSel(); draw(); };
+  }
+  document.getElementById("amp").oninput = draw;
+  document.getElementById("mask").onchange = draw;
+  drawSel(); draw();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

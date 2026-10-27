@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG 切块实验</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .sl { display:grid; grid-template-columns:7em 1fr 4em; gap:6px; align-items:center; font-size:13px; }
+  .hit { margin-top:6px; border:1px solid var(--line); border-radius:6px; padding:6px 8px; font-size:13px; }
+  .hit .hd { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; }
+  mark { background:#c8e6c9; } mark.part { background:#ffe0b2; }
+  .ttl { color:var(--accent); font-weight:bold; }
+  table.t { width:100%; } table.t td:first-child { text-align:left; }
+  .y { color:var(--pos); font-weight:bold; } .n { color:var(--neg); font-weight:bold; }
+</style>
+</head>
+<body>
+<h1>RAG 切块实验：块切多大，检索才准？</h1>
+<div class="sub">知识库是实验 11-2 的《学生手册》（虚构，12 章，约 4000 字）。调整切块方式，再提问，看检索出的前 3 个片段里有没有<b>完整的</b>答案依据（绿色）。橙色表示依据被切断了。</div>
+
+<div class="row"><button id="mFix" class="on">固定长度切块</button><button id="mSec">按章节切块</button>
+  <label style="font-size:12.5px"><input type="checkbox" id="meta" checked> 片段前加章节标题（元数据）</label></div>
+<div id="fixOpts">
+  <div class="sl"><span>块大小（字）</span><input type="range" id="size" min="30" max="600" step="10" value="120"><b id="sizev"></b></div>
+  <div class="sl"><span>重叠（字）</span><input type="range" id="ov" min="0" max="100" step="10" value="0"><b id="ovv"></b></div>
+</div>
+<div class="row"><input type="text" id="q" value="一次最多能借几本书？"><button class="main" id="go">检索</button></div>
+<div class="row ex" id="ex"></div>
+<div class="msg" id="info"></div>
+
+<div class="grid2">
+  <div class="box"><h2>检索结果（前 3 个片段）</h2><div id="hits"></div></div>
+  <div class="box"><h2>8 道测试题一起测</h2><table class="t" id="eval"></table><div class="msg" id="sum"></div></div>
+</div>
+<div class="note">说明：网页里没有 jieba，这里用“相邻两个字”作为检索单位来算 BM25（k₁ = 1.5，b = 0.75），排名会和实验 11-2 略有不同。“挂科了怎么办”和手册的用词（不及格、补考）完全不同，关键词检索怎么切都找不到，需要 11.4.4 节的向量检索；“寝室里能用电饭锅吗”能找到，只是因为“用电”两个字碰巧和“使用电热毯”重合了。</div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  var TESTS = [
+    ["一次最多能借几本书？", "一次最多可借 10 本书"], ["奖学金需要什么条件？", "成绩排名在本专业前 30%"],
+    ["选修课最多可以选几门？", "每学期选修课不得超过 3 门"], ["宿舍几点关门？", "宿舍楼大门每天 23:30 关闭"],
+    ["挂科了怎么办？", "下学期开学第 2 周的补考"], ["寝室里能用电饭锅吗？", "禁止使用电热毯、电磁炉、热得快等大功率电器"],
+    ["上网的账号是什么？", "用学号和统一身份认证密码登录"], ["被处分了不服可以找谁？", "向学生申诉处理委员会提出书面申诉"]
+  ];
+  var mode = "fix";
+  function chunks() {
+    var meta = document.getElementById("meta").checked, out = [];
+    if (mode === "sec") return HANDBOOK.map(function (s) { return { title:s[0], text:s[1], head:meta ? s[0] : "" }; });
+    var size = +document.getElementById("size").value, ov = Math.min(+document.getElementById("ov").value, size - 10), full = "", starts = [];
+    HANDBOOK.forEach(function (s) { starts.push([full.length, s[0]]); full += s[1]; });
+    for (var i = 0; i < full.length; i += size - ov) {
+      var t = starts.filter(function (x) { return x[0] <= i; }).pop()[1];
+      out.push({ title:t, text:full.substr(i, size), head:meta ? t : "" });
+      if (i + size >= full.length) break;
+    }
+    return out;
+  }
+  function toks(s) { var t = [], c = s.replace(/[，。、；：？！“”（）《》\s,.:;?!()]/g, "|"); for (var i = 0; i + 1 < c.length; i++) if (c[i] !== "|" && c[i + 1] !== "|") t.push(c.substr(i, 2)); return t; }
+  function search(q, cs) {
+    var docs = cs.map(function (c) { return toks(c.head + c.text); }), N = docs.length, avg = docs.reduce(function (s, d) { return s + d.length; }, 0) / N, df = {};
+    docs.forEach(function (d) { Object.keys(d.reduce(function (o, w) { o[w] = 1; return o; }, {})).forEach(function (w) { df[w] = (df[w] || 0) + 1; }); });
+    var qt = toks(q);
+    return docs.map(function (d, i) {
+      var tf = {}; d.forEach(function (w) { tf[w] = (tf[w] || 0) + 1; });
+      var s = 0; qt.forEach(function (w) { if (!tf[w]) return; var idf = Math.log((N - df[w] + 0.5) / (df[w] + 0.5) + 1); s += idf * tf[w] * 2.5 / (tf[w] + 1.5 * (0.25 + 0.75 * d.length / avg)); });
+      return { i:i, s:s };
+    }).sort(function (a, b) { return b.s - a.s; }).slice(0, 3);
+  }
+  // 依据是否完整出现在片段中；部分出现（被切断）返回 "part"
+  function has(text, ev) {
+    if (text.indexOf(ev) >= 0) return "full";
+    for (var k = ev.length - 1; k >= 6; k--) if (text.indexOf(ev.substr(0, k)) >= 0 || text.indexOf(ev.substr(ev.length - k)) >= 0) return "part";
+    return "";
+  }
+  function mark(text, ev) {
+    var h = has(text, ev);
+    if (h === "full") return text.replace(ev, "<mark>" + ev + "</mark>");
+    if (h === "part") for (var k = ev.length - 1; k >= 6; k--) { var a = ev.substr(0, k), b = ev.substr(ev.length - k); if (text.indexOf(a) >= 0) return text.replace(a, "<mark class='part'>" + a + "</mark>"); if (text.indexOf(b) >= 0) return text.replace(b, "<mark class='part'>" + b + "</mark>"); }
+    return text;
+  }
+  function run() {
+    document.getElementById("sizev").textContent = document.getElementById("size").value;
+    document.getElementById("ovv").textContent = document.getElementById("ov").value;
+    document.getElementById("fixOpts").style.display = mode === "fix" ? "" : "none";
+    var cs = chunks(), q = document.getElementById("q").value, ev = (TESTS.filter(function (t) { return t[0] === q; })[0] || [])[1] || "";
+    var avgLen = Math.round(cs.reduce(function (s, c) { return s + c.text.length; }, 0) / cs.length);
+    document.getElementById("info").innerHTML = "现在共有 <b>" + cs.length + "</b> 个片段，平均每个 " + avgLen + " 字。";
+    var r = search(q, cs), ctx = 0;
+    document.getElementById("hits").innerHTML = r.map(function (x, k) {
+      var c = cs[x.i]; ctx += c.head.length + c.text.length;
+      return "<div class='hit'><div class='hd'><span>第 " + (k + 1) + " 名 · 来自“" + c.title + "”</span><span>得分 " + x.s.toFixed(2) + "</span></div>" + (c.head ? "<span class='ttl'>【" + c.head + "】</span>" : "") + (ev ? mark(c.text, ev) : c.text) + "</div>";
+    }).join("") + "<div class='note'>这 3 个片段拼进提示词，大约 " + ctx + " 字。" + (ev ? "" : "（自己输入的问题没有标准依据，不做绿色标注）") + "</div>";
+    var hit = 0, rows = TESTS.map(function (t) {
+      var rr = search(t[0], cs), st = rr.map(function (x) { return has(cs[x.i].text, t[1]); }), ok = st.indexOf("full") >= 0, part = !ok && st.indexOf("part") >= 0;
+      var len = rr.reduce(function (s, x) { return s + cs[x.i].head.length + cs[x.i].text.length; }, 0);
+      if (ok) hit++;
+      return "<tr><td>" + t[0] + "</td><td class='" + (ok ? "y" : "n") + "'>" + (ok ? "✓" : part ? "切断" : "✗") + "</td><td>" + len + "</td></tr>";
+    });
+    document.getElementById("eval").innerHTML = "<tr><th>问题</th><th>找到完整依据</th><th>提示词字数</th></tr>" + rows.join("");
+    document.getElementById("sum").innerHTML = "命中 <b>" + hit + " / 8</b>。" + (mode === "fix" && +document.getElementById("size").value < 60 ? "块太小，依据常被切断。试试加一点重叠。" : mode === "fix" && +document.getElementById("size").value > 400 ? "块很大，命中率可能不错，但提示词变长、无关内容变多。" : "");
+  }
+  document.getElementById("ex").innerHTML = "<span class='lbl'>测试题：</span>" + TESTS.map(function (t) { return "<button>" + t[0] + "</button>"; }).join("");
+  document.querySelectorAll("#ex button").forEach(function (b) { b.onclick = function () { document.getElementById("q").value = b.textContent; run(); }; });
+  document.getElementById("mFix").onclick = function () { mode = "fix"; this.classList.add("on"); document.getElementById("mSec").classList.remove("on"); run(); };
+  document.getElementById("mSec").onclick = function () { mode = "sec"; this.classList.add("on"); document.getElementById("mFix").classList.remove("on"); run(); };
+  ["size", "ov"].forEach(function (id) { document.getElementById(id).oninput = run; });
+  document.getElementById("meta").onchange = run;
+  document.getElementById("go").onclick = run;
+  document.getElementById("q").onkeydown = function (e) { if (e.key === "Enter") run(); };
+  run();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

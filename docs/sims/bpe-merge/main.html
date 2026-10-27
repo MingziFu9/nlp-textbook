@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BPE 合并过程</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .words { display:grid; grid-template-columns:auto 1fr; gap:4px 10px; align-items:center; font-size:15px; }
+  .cnt { color:var(--muted); font-size:12px; text-align:right; }
+  .pc { display:inline-block; padding:1px 7px; margin:1px; border-radius:4px; background:#eceff1; font-family:Consolas,monospace; transition:background .3s; }
+  .pc.new { background:#ffe082; font-weight:bold; }
+  .pc.multi { background:var(--soft); }
+  table.t td.k { font-family:Consolas,monospace; }
+  tr.best td { background:#fff8e1; font-weight:bold; }
+  .vocab .pc { font-size:13px; }
+  .merges { font-size:13px; }
+</style>
+</head>
+<body>
+<h1>BPE 合并过程：哪两个片段最常挨在一起，就合并它们</h1>
+<div class="sub">语料默认是教材 3.6.2 节的例子。每点一次“合并一次”，就统计所有相邻片段对的出现次数，把最多的一对合并成新片段（次数相同取先出现的）。</div>
+
+<div class="row"><input type="text" id="corpus" value="low:5 lower:2 newest:6 widest:3" aria-label="语料"><button id="load">用这份语料重来</button></div>
+<div class="row ex"><span class="lbl">试试：</span><button data-c="low:5 lower:2 newest:6 widest:3">教材例子</button><button data-c="自然语言:6 自然科学:3 语言学:4 语言模型:5 大模型:4">中文词</button><button data-c="playing:4 played:3 player:2 saying:3 said:2">英文词形变化</button></div>
+<div class="row"><button class="main" id="step">合并一次 ▶</button><button id="ten">连续合并 5 次</button><span id="info" class="note" style="margin:0"></span></div>
+
+<div class="grid2">
+  <div class="box"><h2>语料现在被切成</h2><div class="words" id="words"></div></div>
+  <div class="box"><h2>相邻片段对的出现次数（前 8 名）</h2><table class="t" id="pairs"></table></div>
+</div>
+<div class="grid2">
+  <div class="box merges"><h2>合并记录（就是 BPE 学到的“规则”）</h2><ol id="merges" style="margin:0;padding-left:1.6em"></ol></div>
+  <div class="box vocab"><h2>词表（<span id="vn"></span> 个片段）</h2><div id="vocab"></div></div>
+</div>
+
+<script>
+(function () {
+  var words = [], merges = [], vocab = [], last = null;
+  function load(text) {
+    words = []; merges = []; last = null;
+    text.split(/\s+/).forEach(function (t) {
+      var m = t.match(/^(.+?)(?::(\d+))?$/); if (!m) return;
+      words.push({ w:m[1], n:+(m[2] || 1), p:Array.from(m[1]) });
+    });
+    vocab = []; words.forEach(function (x) { x.p.forEach(function (c) { if (vocab.indexOf(c) < 0) vocab.push(c); }); });
+    draw();
+  }
+  // 按语料顺序统计相邻对，保证“次数相同取先出现的”
+  function count() {
+    var keys = [], c = {};
+    words.forEach(function (x) { for (var i = 0; i + 1 < x.p.length; i++) { var k = x.p[i] + "\u0001" + x.p[i + 1]; if (!(k in c)) { c[k] = 0; keys.push(k); } c[k] += x.n; } });
+    return keys.map(function (k) { return { a:k.split("\u0001")[0], b:k.split("\u0001")[1], n:c[k] }; });
+  }
+  function best(list) { var b = null; list.forEach(function (p) { if (!b || p.n > b.n) b = p; }); return b; }
+  function step() {
+    var b = best(count()); if (!b) return false;
+    var nw = b.a + b.b;
+    words.forEach(function (x) { var o = []; for (var i = 0; i < x.p.length; i++) { if (i + 1 < x.p.length && x.p[i] === b.a && x.p[i + 1] === b.b) { o.push(nw); i++; } else o.push(x.p[i]); } x.p = o; });
+    merges.push(b); if (vocab.indexOf(nw) < 0) vocab.push(nw); last = nw; return true;
+  }
+  function pc(s, cls) { return '<span class="pc' + (cls ? " " + cls : "") + '">' + s + "</span>"; }
+  function draw() {
+    document.getElementById("words").innerHTML = words.map(function (x) {
+      return '<span class="cnt">' + x.w + " ×" + x.n + "</span><span>" + x.p.map(function (p) { return pc(p, p === last ? "new" : p.length > 1 ? "multi" : ""); }).join("") + "</span>";
+    }).join("");
+    var list = count(), b = best(list), top = list.slice().sort(function (x, y) { return y.n - x.n || list.indexOf(x) - list.indexOf(y); }).slice(0, 8);
+    document.getElementById("pairs").innerHTML = "<tr><th>片段对</th><th>次数</th><th>来自</th></tr>" + top.map(function (p) {
+      var from = words.filter(function (x) { for (var i = 0; i + 1 < x.p.length; i++) if (x.p[i] === p.a && x.p[i + 1] === p.b) return true; return false; })
+        .map(function (x) { return x.w + "(" + x.n + ")"; }).join(" + ");
+      return "<tr" + (p === b ? ' class="best"' : "") + "><td class='k'>" + p.a + " + " + p.b + "</td><td>" + p.n + "</td><td style='font-size:12px'>" + from + "</td></tr>";
+    }).join("") || "<tr><td>没有可以合并的了，每个词都已是一个片段</td></tr>";
+    document.getElementById("merges").innerHTML = merges.map(function (m, i) { return "<li>" + m.a + " + " + m.b + " → <b>" + m.a + m.b + "</b>（" + m.n + " 次）</li>"; }).join("") || "<li style='list-style:none;color:#78909c;margin-left:-1.6em'>还没有合并</li>";
+    document.getElementById("vocab").innerHTML = vocab.map(function (v) { return pc(v, v === last ? "new" : v.length > 1 ? "multi" : ""); }).join("");
+    document.getElementById("vn").textContent = vocab.length;
+    var tok = words.reduce(function (s, x) { return s + x.p.length * x.n; }, 0), chars = words.reduce(function (s, x) { return s + Array.from(x.w).length * x.n; }, 0);
+    document.getElementById("info").textContent = "已合并 " + merges.length + " 次；整份语料现在要 " + tok + " 个 token（一开始是 " + chars + " 个）";
+    document.getElementById("step").disabled = document.getElementById("ten").disabled = !b;
+  }
+  document.getElementById("step").onclick = function () { step(); draw(); };
+  document.getElementById("ten").onclick = function () { for (var i = 0; i < 5; i++) if (!step()) break; draw(); };
+  document.getElementById("load").onclick = function () { load(document.getElementById("corpus").value); };
+  document.querySelectorAll(".ex button").forEach(function (b) { b.onclick = function () { document.getElementById("corpus").value = b.dataset.c; load(b.dataset.c); }; });
+  load(document.getElementById("corpus").value);
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

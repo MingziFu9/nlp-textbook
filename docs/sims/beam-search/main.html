@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>贪心与束搜索</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .wrap { overflow-x:auto; }
+  svg { display:block; }
+  .res div { font-size:14px; margin:2px 0; }
+</style>
+</head>
+<body>
+<h1>贪心搜索与束搜索：每步最优 ≠ 整句最优</h1>
+<div class="sub">模型要接着“今天天气”往下写。每个方框里是一个词和它的概率，括号里是整句到这里的概率（各步概率相乘）。束宽 = 1 就是贪心搜索。点“下一步”，看每一步保留了哪些候选（蓝色），哪些被剪掉（灰色）。</div>
+
+<div class="row">
+  <span style="font-size:13px">束宽 k：</span><button data-k="1" class="on">1（贪心）</button><button data-k="2">2</button><button data-k="3">3</button>
+  <span style="flex:1"></span><button class="main" id="step">下一步 ▶</button><button id="all">走完</button><button id="reset">重来</button>
+</div>
+<div class="wrap"><svg id="tree" width="640" height="420"></svg></div>
+<div class="box res" id="res"></div>
+
+<script>
+(function () {
+  // 每个前缀后面可以接的词和概率（只列出主要的几个）
+  var M = {
+    "":     [["很",.35],["真",.20],["不",.15],["有点",.10]],
+    "很":   [["好",.30],["热",.25],["冷",.20],["不错",.15]],
+    "真":   [["好",.80],["不错",.15]],
+    "不":   [["错",.90]],
+    "有点": [["热",.60],["冷",.30]],
+    "很好": [["。",.50],["，",.40]], "很热": [["。",.60],["，",.30]], "很冷": [["。",.60],["，",.30]], "很不错": [["。",.90]],
+    "真好": [["。",.70],["，",.20]], "真不错": [["。",.90]], "不错": [["。",.90]], "有点热": [["。",.70]], "有点冷": [["。",.70]]
+  };
+  var K = 1, t = 0, steps;
+  // 预先算出每一步的全部扩展和保留的候选
+  function plan() {
+    var beams = [{ toks:[], p:1, id:"" }], out = [];
+    for (var s = 0; s < 3; s++) {
+      var cand = [];
+      beams.forEach(function (b) { (M[b.toks.join("")] || []).forEach(function (n) { cand.push({ toks:b.toks.concat(n[0]), p:b.p * n[1], local:n[1], parent:b.id, id:b.id + "/" + n[0] }); }); });
+      cand.sort(function (a, b) { return b.p - a.p; });
+      cand.forEach(function (c, i) { c.keep = i < K; });
+      out.push(cand); beams = cand.filter(function (c) { return c.keep; });
+    }
+    return out;
+  }
+  function draw() {
+    steps = plan();
+    var colW = 160, rowH = 36, s = "", pos = { "": [20, 190] };
+    s += '<rect x="4" y="172" width="78" height="34" rx="6" fill="#263238"/><text x="43" y="194" fill="#fff" font-size="13" text-anchor="middle">今天天气</text>';
+    pos[""] = [82, 189];
+    for (var j = 0; j < t; j++) {
+      var cand = steps[j], x = 120 + j * colW, h = cand.length * rowH, y0 = Math.max(10, 190 - h / 2);
+      cand.forEach(function (c, i) {
+        var y = y0 + i * rowH, pp = pos[c.parent]; if (!pp) return;
+        var col = c.keep ? "#3f51b5" : "#b0bec5";
+        s += '<path d="M' + pp[0] + "," + pp[1] + " C" + (pp[0] + 25) + "," + pp[1] + " " + (x - 25) + "," + (y + 14) + " " + x + "," + (y + 14) + '" fill="none" stroke="' + col + '" stroke-width="' + (c.keep ? 1.8 : 1) + '"/>';
+        s += '<rect x="' + x + '" y="' + y + '" width="128" height="28" rx="6" fill="' + (c.keep ? "#e8eaf6" : "#fafafa") + '" stroke="' + col + '"/>';
+        s += '<text x="' + (x + 8) + '" y="' + (y + 19) + '" font-size="13" fill="' + (c.keep ? "#263238" : "#90a4ae") + '"><tspan font-weight="bold">' + c.toks[c.toks.length - 1] + "</tspan> " + c.local.toFixed(2) + " (" + c.p.toFixed(3) + ")</text>";
+        if (c.keep) pos[c.id] = [x + 128, y + 14];
+      });
+    }
+    var svg = document.getElementById("tree"), H = 420;
+    steps.slice(0, t).forEach(function (c) { H = Math.max(H, c.length * rowH + 40); });
+    svg.setAttribute("height", H); svg.innerHTML = s;
+    var r = "";
+    if (t === 0) r = "还没开始。束宽 = " + K + (K === 1 ? "：每一步只留下概率最大的那一个词。" : "：每一步保留整句概率最高的 " + K + " 个候选。");
+    else {
+      var last = steps[t - 1].filter(function (c) { return c.keep; });
+      r = "<div>第 " + t + " 步共扩展出 " + steps[t - 1].length + " 个候选，保留 " + last.length + " 个：" + last.map(function (c) { return "“今天天气" + c.toks.join("") + "”(" + c.p.toFixed(3) + ")"; }).join("，") + "</div>";
+      if (t === 3) {
+        var best = last[0];
+        r += "<div class='big' style='font-size:16px'>结果：今天天气" + best.toks.join("") + "　整句概率 " + best.p.toFixed(4) + "</div>";
+        r += K === 1 ? "<div class='note'>贪心搜索第一步就选了概率最大的“很”，但“很”后面的词都不太确定（最高只有 0.30），整句概率反而不高。把束宽调到 2 或 3 再试试。</div>"
+          : K === 2 ? "<div class='note'>束宽 2 保住了第一步排第二的“真”，而“真”后面几乎一定是“好”（0.80），整句概率比贪心高了一倍多。再试试束宽 3。</div>"
+          : "<div class='note'>束宽 3 又保住了“不”，“不错。”的整句概率最高。束越宽，越可能找到整体最优，但计算量也越大。</div>";
+      }
+    }
+    document.getElementById("res").innerHTML = r;
+    document.getElementById("step").disabled = t >= 3;
+  }
+  document.querySelectorAll("[data-k]").forEach(function (b) { b.onclick = function () { K = +b.dataset.k; t = 0; document.querySelectorAll("[data-k]").forEach(function (x) { x.classList.toggle("on", x === b); }); draw(); }; });
+  document.getElementById("step").onclick = function () { if (t < 3) t++; draw(); };
+  document.getElementById("all").onclick = function () { t = 3; draw(); };
+  document.getElementById("reset").onclick = function () { t = 0; draw(); };
+  draw();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

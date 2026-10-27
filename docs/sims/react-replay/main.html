@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ReAct 执行回放</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .tools { display:flex; gap:6px; flex-wrap:wrap; }
+  .tool { border:1px solid var(--line); border-radius:6px; padding:4px 8px; font-size:12px; font-family:Consolas,monospace; transition:all .2s; }
+  .tool.on { border-color:var(--warn); background:#fff3e0; box-shadow:0 0 0 2px #ffe0b2; }
+  .tl { margin-top:6px; }
+  .st { border-left:4px solid var(--line); padding:4px 10px; margin:4px 0; font-size:13.5px; border-radius:0 6px 6px 0; animation:fade .3s; }
+  .st .k { font-weight:bold; margin-right:6px; }
+  .st.think { border-color:#8e24aa; background:#f3e5f5; } .st.act { border-color:var(--warn); background:#fff3e0; }
+  .st.obs { border-color:#1e88e5; background:#e3f2fd; } .st.ans { border-color:var(--pos); background:#e8f5e9; }
+  .st.q { border-color:#263238; background:#eceff1; }
+  .msgs { font-family:Consolas,monospace; font-size:11.5px; max-height:300px; overflow:auto; }
+  .msgs div { padding:2px 4px; border-bottom:1px dashed #eceff1; white-space:pre-wrap; word-break:break-all; }
+  .msgs b { color:var(--accent); }
+  @keyframes fade { from { opacity:0; transform:translateY(4px); } to { opacity:1; } }
+</style>
+</head>
+<body>
+<h1>ReAct 执行回放：思考 → 行动 → 观察，直到能回答</h1>
+<div class="sub">回放实验 11-3 中迷你智能体处理问题的过程。左边是“人能看懂”的思考链，右边是程序和大模型之间实际传递的消息（对话历史）。工具结果来自实验 11-2 的学生手册。</div>
+
+<div class="row ex" id="ex"></div>
+<div class="tools" id="tools"></div>
+<div class="row"><button class="main" id="next">下一步 ▶</button><button id="play">自动播放</button><button id="reset">重来</button><span class="note" id="cnt" style="margin:0"></span></div>
+
+<div class="grid2">
+  <div class="box"><h2>思考链</h2><div class="tl" id="tl"></div></div>
+  <div class="box"><h2>对话历史（messages）</h2><div class="msgs" id="msgs"></div><div class="note" id="tok"></div></div>
+</div>
+<div class="msg" id="lesson"></div>
+
+<script>
+(function () {
+  var TOOLS = { search_handbook:"检索学生手册中的规章制度", calculator:"计算加减乘除表达式", get_today:"获取今天的日期和星期" };
+  // 每一步：[类型, 文字, 工具名, 参数]
+  var CASES = [
+    { q:"今天星期几？图书馆今天几点关门？", steps:[
+      ["think","我需要先知道今天是星期几，再查图书馆的开放时间。"],
+      ["act","调用 get_today()","get_today","{}"],
+      ["obs","2026-10-22，星期四"],
+      ["think","今天是星期四。接下来查图书馆的开放时间。"],
+      ["act","调用 search_handbook(\"图书馆开放时间\")","search_handbook","{\"query\": \"图书馆开放时间\"}"],
+      ["obs","【七、图书馆】图书馆位于校园中心，周一至周日 8:00 开馆，22:00 闭馆，节假日开放时间以图书馆通知为准……"],
+      ["think","星期四在“周一至周日”范围内，信息足够了。"],
+      ["ans","今天是星期四，图书馆 22:00 闭馆。（依据：学生手册第七章）"]],
+      lesson:"两个子问题之间有先后关系：先拿到日期，再判断它在不在开放时间范围内。" },
+    { q:"一等奖学金和三等奖学金加起来一共多少钱？", steps:[
+      ["think","奖学金金额是学校的规定，不能凭印象回答，要先检索手册。"],
+      ["act","调用 search_handbook(\"奖学金 等级 金额\")","search_handbook","{\"query\": \"奖学金 等级 金额\"}"],
+      ["obs","【六、奖学金与资助】……奖学金分为一等（3000 元）、二等（2000 元）、三等（1000 元）三个等级……"],
+      ["think","一等 3000 元，三等 1000 元。加法交给计算器，避免算错。"],
+      ["act","调用 calculator(\"3000+1000\")","calculator","{\"expression\": \"3000+1000\"}"],
+      ["obs","4000"],
+      ["ans","一等奖学金 3000 元，三等奖学金 1000 元，加起来一共 4000 元。（依据：学生手册第六章）"]],
+      lesson:"先检索再计算：金额来自手册，计算交给工具。如果模型跳过检索直接说出金额，就是在“凭印象”作答，可能产生幻觉。" },
+    { q:"挂科了怎么办？", steps:[
+      ["think","这是考试相关的规定，先检索手册。"],
+      ["act","调用 search_handbook(\"挂科\")","search_handbook","{\"query\": \"挂科\"}"],
+      ["obs","【十、食堂与生活服务】学院有两个食堂……\n【五、请假制度】学生因病或因事不能上课的……"],
+      ["think","检索结果和挂科无关。手册里大概不用“挂科”这个口语，换成正式说法“不及格 补考”再查一次。"],
+      ["act","调用 search_handbook(\"考试不及格 补考\")","search_handbook","{\"query\": \"考试不及格 补考\"}"],
+      ["obs","【四、考试与成绩】……考试不及格的学生可以参加下学期开学第 2 周的补考，补考成绩最高记为 60 分。补考仍不及格的，需要重修该课程……"],
+      ["ans","可以参加下学期开学第 2 周的补考，补考成绩最高记为 60 分；补考仍不及格的需要重修。（依据：学生手册第四章）"]],
+      lesson:"第一次检索没找到时，智能体根据“观察”调整了做法（换关键词重试），这正是 ReAct 比“一次检索就回答”更灵活的地方。实验代码中的 max_steps 防止它无限重试下去。" }
+  ];
+  var C = 0, t = 0, timer = null;
+  function msgsUpTo(c, n) {
+    var m = [["system","你是星海职业学院的学生事务助手。涉及规定必须先检索手册，计算用计算器。"],["user",c.q]], id = 0;
+    c.steps.slice(0, n).forEach(function (s) {
+      if (s[0] === "act") { id++; m.push(["assistant","tool_calls: " + s[2] + "(" + s[3] + ")  id=call_" + id]); }
+      if (s[0] === "obs") m.push(["tool","(tool_call_id=call_" + id + ") " + s[1]]);
+      if (s[0] === "ans") m.push(["assistant",s[1]]);
+    });
+    return m;
+  }
+  function draw() {
+    var c = CASES[C], cur = c.steps[t - 1];
+    document.getElementById("tools").innerHTML = "<span class='lbl' style='font-size:12px;color:#78909c'>可用工具：</span>" + Object.keys(TOOLS).map(function (k) { return '<span class="tool' + (cur && cur[2] === k ? " on" : "") + '" title="' + TOOLS[k] + '">' + k + "()</span>"; }).join("");
+    var L = { think:"思考", act:"行动", obs:"观察", ans:"回答" };
+    document.getElementById("tl").innerHTML = '<div class="st q"><span class="k">问题</span>' + c.q + "</div>" + c.steps.slice(0, t).map(function (s) { return '<div class="st ' + s[0] + '"><span class="k">' + L[s[0]] + "</span>" + s[1].replace(/\n/g, "<br>") + "</div>"; }).join("");
+    var m = msgsUpTo(c, t), chars = m.reduce(function (s, x) { return s + x[1].length; }, 0);
+    document.getElementById("msgs").innerHTML = m.map(function (x) { return "<div><b>" + x[0] + "</b>: " + x[1].replace(/</g, "&lt;") + "</div>"; }).join("");
+    var calls = c.steps.slice(0, t).filter(function (s) { return s[0] === "act"; }).length;
+    document.getElementById("tok").innerHTML = "对话历史共约 " + chars + " 字。每调用一次工具，就要把整个历史再发给大模型一次：到目前为止已经请求了 " + (calls + (t && c.steps[t - 1][0] === "ans" ? 1 : 0)) + " 次。“思考”这一行通常不会出现在 messages 里，这里为了教学单独列出。";
+    document.getElementById("cnt").textContent = "第 " + t + " / " + c.steps.length + " 步";
+    document.getElementById("lesson").innerHTML = t === c.steps.length ? "💡 " + c.lesson : "";
+    document.getElementById("next").disabled = t >= c.steps.length;
+  }
+  function stop() { clearInterval(timer); timer = null; document.getElementById("play").textContent = "自动播放"; }
+  document.getElementById("ex").innerHTML = "<span class='lbl'>问题：</span>" + CASES.map(function (c, i) { return '<button data-i="' + i + '"' + (i === 0 ? ' class="on"' : "") + ">" + c.q + "</button>"; }).join("");
+  document.querySelectorAll("#ex button").forEach(function (b) { b.onclick = function () { stop(); C = +b.dataset.i; t = 0; document.querySelectorAll("#ex button").forEach(function (x) { x.classList.toggle("on", x === b); }); draw(); }; });
+  document.getElementById("next").onclick = function () { if (t < CASES[C].steps.length) t++; draw(); };
+  document.getElementById("reset").onclick = function () { stop(); t = 0; draw(); };
+  document.getElementById("play").onclick = function () {
+    if (timer) return stop();
+    if (t >= CASES[C].steps.length) t = 0;
+    this.textContent = "暂停";
+    timer = setInterval(function () { if (t >= CASES[C].steps.length) return stop(); t++; draw(); }, 1300);
+  };
+  draw();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

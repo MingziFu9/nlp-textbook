@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文本清洗流水线</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .steps { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .st { display:flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:6px; padding:3px 8px; font-size:12.5px; background:#fff; cursor:pointer; }
+  .st.done { background:var(--soft); border-color:var(--accent); }
+  .st.off { opacity:.45; text-decoration:line-through; }
+  .st .n { display:inline-block; width:18px; height:18px; line-height:18px; text-align:center; border-radius:50%; background:var(--line); font-size:11px; }
+  .st.done .n { background:var(--accent); color:#fff; }
+  table.t { width:100%; } table.t td { text-align:left; vertical-align:top; } table.t td.i { width:2em; text-align:center; color:var(--muted); }
+  .dropped { color:var(--muted); text-decoration:line-through; }
+  .tag { font-size:11px; padding:0 5px; border-radius:8px; margin-left:4px; white-space:nowrap; }
+  .tag.dup { background:#ffebee; color:var(--neg); } .tag.short { background:#eceff1; color:var(--muted); }
+  .chg { background:#fff59d; }
+  .sum { font-size:13.5px; margin-top:6px; }
+</style>
+</head>
+<body>
+<h1>文本清洗流水线：一步一步把评论“洗干净”</h1>
+<div class="sub">流程和教材 2.6.5 节一致。点“下一步”逐步执行，黄色是这一步改动的地方；点步骤名可以跳过这一步，看看会漏掉什么。</div>
+
+<div class="steps" id="steps"></div>
+<div class="row">
+  <button class="main" id="next">下一步 ▶</button>
+  <button id="all">全部执行</button>
+  <button id="reset">回到原始数据</button>
+  <label style="font-size:12.5px"><input type="checkbox" id="keepPunc"> 全角转半角时保留中文标点</label>
+  <label style="font-size:12.5px"><input type="checkbox" id="dedupFirst"> 先去重，再清洗（错误顺序）</label>
+</div>
+<div class="row"><input type="text" id="add" placeholder="输入一条自己的“脏”评论，按回车加入"><button id="addBtn">加入</button></div>
+
+<table class="t" id="tbl"></table>
+<div class="sum" id="sum"></div>
+<div class="note">说明：网页里的繁简转换只内置了几十个常用字，真实项目请用 OpenCC；表情符号按 Unicode 编码范围删除。</div>
+
+<script>
+(function () {
+  var RAW = [
+    "<p>挺好吃的！！！！</p><br/>",
+    "挺好吃的！",
+    "@外卖小哥 送餐太快了👍 #吃货日常#",
+    "送餐太快了",
+    "這個東西真的很好吃，還會再來",
+    "ｈａｏ吃，价格只要１２８元",
+    "详情见 http://t.cn/A6xYz 😂😂😂",
+    "送餐太慢了，等了一个半小时",
+    "送餐太慢了,等了一个半小时",
+    "   \t  "
+  ];
+  var T2S = { "這":"这","個":"个","東":"东","還":"还","會":"会","來":"来","們":"们","麼":"么","說":"说","點":"点","時":"时","發":"发","難":"难","買":"买","賣":"卖","貴":"贵","飯":"饭","餐":"餐","慢":"慢","樣":"样","對":"对","為":"为","與":"与","價":"价","錢":"钱","單":"单","沒":"没","從":"从","們":"们","後":"后","讓":"让","給":"给","當":"当","鹹":"咸","嗎":"吗","氣":"气" };
+  var keepPunc = false, dedupFirst = false;
+  var STEPS = [
+    { id:"html", name:"去 HTML 标签", f:function (s) { return s.replace(/<[^>]+>/g, ""); } },
+    { id:"url", name:"去网址", f:function (s) { return s.replace(/https?:\/\/[^\s一-龥]+/g, ""); } },
+    { id:"at", name:"去 @用户名、#话题#", f:function (s) { return s.replace(/#[^#\s]+#/g, "").replace(/@[\w一-龥]+/g, ""); } },
+    { id:"emoji", name:"去表情符号", f:function (s) { return s.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}️]/gu, ""); } },
+    { id:"width", name:"全角转半角", f:function (s) { return s.replace(/[！-～　]/g, function (c) {
+        var k = c.charCodeAt(0); if (k === 0x3000) return " ";
+        if (keepPunc && !/[０-９Ａ-Ｚａ-ｚ]/.test(c)) return c;
+        return String.fromCharCode(k - 0xFEE0); }); } },
+    { id:"t2s", name:"繁体转简体", f:function (s) { return s.replace(/./g, function (c) { return T2S[c] || c; }); } },
+    { id:"punc", name:"合并重复标点、多余空白", f:function (s) { return s.replace(/([！？。，、~!?.,])\1+/g, "$1").replace(/\s+/g, " ").trim(); } },
+    { id:"short", name:"过滤过短或空白", filter:true },
+    { id:"dedup", name:"去重", filter:true }
+  ];
+  var on = STEPS.map(function () { return true; }), k = 0, data = RAW.slice();
+
+  function order() {
+    var idx = STEPS.map(function (_, i) { return i; });
+    if (dedupFirst) { idx.splice(idx.indexOf(8), 1); idx.unshift(8); }
+    return idx;
+  }
+
+  // 执行前 k 步，返回每条的文本、状态和本步改动
+  function run(kk) {
+    var rows = data.map(function (s) { return { s:s, prev:s, drop:"" }; }), ord = order();
+    for (var j = 0; j < kk; j++) {
+      var st = STEPS[ord[j]], last = j === kk - 1;
+      if (!on[ord[j]]) continue;
+      if (st.id === "short") rows.forEach(function (r) { if (!r.drop && r.s.replace(/\s/g, "").length < 2) r.drop = "short"; });
+      else if (st.id === "dedup") { var seen = {}; rows.forEach(function (r) { if (r.drop) return; if (seen[r.s]) r.drop = "dup"; seen[r.s] = 1; }); }
+      else rows.forEach(function (r) { if (r.drop) return; var t = st.f(r.s); r.prev = last ? r.s : r.prev; if (last) r.changed = t !== r.s; r.s = t; });
+    }
+    return rows;
+  }
+
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/ /g, "␣").replace(/\t/g, "⇥"); }
+
+  function draw() {
+    var ord = order();
+    document.getElementById("steps").innerHTML = ord.map(function (i, j) {
+      return '<span class="st' + (j < k ? " done" : "") + (on[i] ? "" : " off") + '" data-i="' + i + '"><span class="n">' + (j + 1) + "</span>" + STEPS[i].name + "</span>";
+    }).join("");
+    document.querySelectorAll(".st").forEach(function (el) { el.onclick = function () { var i = +el.dataset.i; on[i] = !on[i]; draw(); }; });
+    var rows = run(k);
+    document.getElementById("tbl").innerHTML = "<tr><th>#</th><th>原始评论</th><th>" + (k ? "执行到第 " + k + " 步" : "（还没开始）") + "</th></tr>" +
+      rows.map(function (r, i) {
+        var cur = r.drop ? '<span class="dropped">' + esc(r.s) + "</span>" + (r.drop === "dup" ? '<span class="tag dup">重复，删除</span>' : '<span class="tag short">过短，删除</span>')
+          : r.changed ? '<span class="chg">' + esc(r.s) + "</span>" : esc(r.s);
+        return "<tr><td class='i'>" + (i + 1) + "</td><td>" + esc(data[i]) + "</td><td>" + cur + "</td></tr>";
+      }).join("");
+    var left = rows.filter(function (r) { return !r.drop; }).length;
+    document.getElementById("sum").innerHTML = "原始 <b>" + data.length + "</b> 条 → 目前保留 <b>" + left + "</b> 条" +
+      (k === STEPS.length ? (dedupFirst ? "。<span class='bad'>先去重时，第 1、2 条和第 3、4 条还“长得不一样”，清洗后才变成重复，结果漏删了。</span>" : "。清洗完成，别忘了最后一步：<b>抽样人工检查</b>。") : "");
+    document.getElementById("next").disabled = k >= STEPS.length;
+  }
+
+  document.getElementById("next").onclick = function () { if (k < STEPS.length) k++; draw(); };
+  document.getElementById("all").onclick = function () { k = STEPS.length; draw(); };
+  document.getElementById("reset").onclick = function () { k = 0; draw(); };
+  document.getElementById("keepPunc").onchange = function (e) { keepPunc = e.target.checked; draw(); };
+  document.getElementById("dedupFirst").onchange = function (e) { dedupFirst = e.target.checked; k = 0; draw(); };
+  function add() { var v = document.getElementById("add").value; if (v) { data.push(v); document.getElementById("add").value = ""; draw(); } }
+  document.getElementById("addBtn").onclick = add;
+  document.getElementById("add").onkeydown = function (e) { if (e.key === "Enter") add(); };
+  draw();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

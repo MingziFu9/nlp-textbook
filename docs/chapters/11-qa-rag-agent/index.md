@@ -320,6 +320,11 @@ flowchart TB
 
 此外，每个片段最好附带[**元数据**](../../appendix/e-glossary.md#g-元数据 "附在片段上的文档名、章节、页码、更新日期等信息"){ .term }，如所属文档、章节标题、页码、更新日期，既能帮助检索，也便于在回答中注明出处。实验 11-2 的学生手册结构清晰，我们按章节切块，并把章节标题加在每个片段前面。
 
+<iframe class="sim-frame" src="../../sims/rag-chunking/main.html" height="900" loading="lazy" title="RAG 切块实验"></iframe>
+
+**交互动画：RAG 切块实验**。调整块大小和重叠，看检索出的前 3 个片段里有没有完整的答案依据（绿色），右侧用 8 道测试题统计命中率和提示词长度。[全屏打开](../../sims/rag-chunking/main.html){ target=_blank } · [教学说明](../../sims/rag-chunking/index.md)
+{ .sim-caption }
+
 ### 11.4.4 检索：关键词、向量与混合
 
 检索是 RAG 中最关键的一环：**检索不到正确的资料，模型再强也答不对**。
@@ -478,6 +483,11 @@ sequenceDiagram
 > **回答**：今天是星期四，图书馆 22:00 闭馆。
 
 这和人做事的方式很像：想一步、做一步、看看结果、再想下一步。实验 11-3 中的迷你智能体就是按照这个循环工作的。
+
+<iframe class="sim-frame" src="../../sims/react-replay/main.html" height="720" loading="lazy" title="ReAct 执行回放"></iframe>
+
+**交互动画：ReAct 执行回放**。选一个问题，点“下一步”或“自动播放”。左边是“思考—行动—观察”的过程，右边是程序和大模型之间实际传递的对话历史。[全屏打开](../../sims/react-replay/main.html){ target=_blank } · [教学说明](../../sims/react-replay/index.md)
+{ .sim-caption }
 
 ### 11.5.4 MCP：给智能体的“万能接口”
 

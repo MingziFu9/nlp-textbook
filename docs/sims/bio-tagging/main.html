@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIO 标注练习</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .pal button { font-family:Consolas,monospace; }
+  .pal button.PER { border-color:#e53935; color:#e53935; } .pal button.PER.on { background:#e53935; color:#fff; }
+  .pal button.LOC { border-color:#43a047; color:#43a047; } .pal button.LOC.on { background:#43a047; color:#fff; }
+  .pal button.ORG { border-color:#1e88e5; color:#1e88e5; } .pal button.ORG.on { background:#1e88e5; color:#fff; }
+  .pal button.O { border-color:#90a4ae; color:#546e7a; } .pal button.O.on { background:#90a4ae; color:#fff; }
+  .chars { display:flex; flex-wrap:wrap; gap:3px; margin-top:8px; }
+  .c { width:58px; text-align:center; cursor:pointer; user-select:none; }
+  .c .z { font-size:22px; border:1px solid var(--line); border-radius:5px 5px 0 0; padding:2px 0; background:#fff; }
+  .c .l { font-size:11px; font-family:Consolas,monospace; border:1px solid var(--line); border-top:none; border-radius:0 0 5px 5px; padding:1px 0; background:#f5f5f5; }
+  .c.PER .z { background:#ffebee; } .c.LOC .z { background:#e8f5e9; } .c.ORG .z { background:#e3f2fd; }
+  .c.B .z { border-left:3px solid #263238; }
+  .c.wrong .l { background:#ffcdd2; color:#b71c1c; font-weight:bold; }
+  .c.right .l { background:#c8e6c9; }
+  .c .g { font-size:10px; color:var(--muted); font-family:Consolas,monospace; min-height:14px; }
+  .ents span { display:inline-block; padding:1px 7px; margin:2px; border-radius:10px; font-size:13px; }
+  .ents .PER { background:#ffebee; color:#b71c1c; } .ents .LOC { background:#e8f5e9; color:#1b5e20; } .ents .ORG { background:#e3f2fd; color:#0d47a1; }
+  ul.err { margin:4px 0; padding-left:1.4em; font-size:13px; }
+</style>
+</head>
+<body>
+<h1>BIO 标注练习：给每个字贴标签，再把实体“拼”回来</h1>
+<div class="sub">先在上面选一个标签，再点下面的字（可以连续点多个字）。标好后点“检查”，对照标准答案，并按 7.2.5 节的严格 / 宽松标准算出 P、R、F1。</div>
+
+<div class="row ex" id="ex"></div>
+<div class="row pal" id="pal"></div>
+<div class="chars" id="chars"></div>
+<div class="row"><button class="main" id="check">检查</button><button id="show">看标准答案</button><button id="clear">全部清成 O</button></div>
+
+<div class="grid2">
+  <div class="box"><h2>从你的标签还原出的实体</h2><div class="ents" id="ents"></div><ul class="err" id="warn"></ul></div>
+  <div class="box"><h2>检查结果</h2><div id="res" style="font-size:13.5px">还没检查。</div></div>
+</div>
+
+<script>
+(function () {
+  // 标准答案：[起点, 终点(不含), 类型]
+  var SENTS = [
+    { t:"李志远在杭州创办了星海科技", e:[[0,3,"PER"],[4,6,"LOC"],[9,13,"ORG"]] },
+    { t:"杭州西湖的游客很多", e:[[0,2,"LOC"],[2,4,"LOC"]], hint:"“杭州西湖”是一个地名还是两个？B 标签能把两个相邻实体分开。" },
+    { t:"星海科技董事长李志远昨天到访北京", e:[[0,4,"ORG"],[7,10,"PER"],[14,16,"LOC"]], hint:"按规范，职务“董事长”不属于人名。" },
+    { t:"张华毕业于浙江大学", e:[[0,2,"PER"],[5,9,"ORG"]], hint:"“浙江大学”里还嵌着地名“浙江”，BIO 只能标一层，这里只标最外层。" }
+  ];
+  var LABELS = ["B-PER","I-PER","B-LOC","I-LOC","B-ORG","I-ORG","O"], brush = "B-PER", S, tags, gold, checked = false, showGold = false;
+
+  function goldTags(s) { var g = Array.from(s.t).map(function () { return "O"; }); s.e.forEach(function (x) { for (var i = x[0]; i < x[1]; i++) g[i] = (i === x[0] ? "B-" : "I-") + x[2]; }); return g; }
+  // 解码：从 B 开始，连上后面同类型的 I；遇到 O、下一个 B 或类型不同的 I 就结束
+  function decode(tg) {
+    var ents = [], warn = [], cur = null, chars = Array.from(S.t);
+    tg.forEach(function (l, i) {
+      var p = l.split("-"), bi = p[0], ty = p[1];
+      if (bi === "I" && (!cur || cur[2] !== ty)) {
+        warn.push("第 " + (i + 1) + " 个字“" + chars[i] + "”是 " + l + "，但" + (cur ? "前面实体的类型是 " + cur[2] + "（同一个实体内类型必须相同）" : "前面没有 B（每个实体的第一个字必须是 B）") + "。");
+        if (cur) { ents.push(cur); cur = null; }
+        return;
+      }
+      if (bi === "I") { cur[1] = i + 1; return; }
+      if (cur) { ents.push(cur); cur = null; }
+      if (bi === "B") cur = [i, i + 1, ty];
+    });
+    if (cur) ents.push(cur);
+    return { ents:ents, warn:warn };
+  }
+  function load(i) { S = SENTS[i]; gold = goldTags(S); tags = gold.map(function () { return "O"; }); checked = showGold = false; document.getElementById("res").innerHTML = S.hint ? "提示：" + S.hint : "还没检查。"; draw(); }
+  function draw() {
+    var chars = Array.from(S.t);
+    document.getElementById("chars").innerHTML = chars.map(function (ch, i) {
+      var l = tags[i], c = "c " + (l === "O" ? "" : l.slice(2) + " " + l[0]);
+      if (checked) c += l === gold[i] ? " right" : " wrong";
+      return '<div class="' + c + '" data-i="' + i + '"><div class="z">' + ch + '</div><div class="l">' + l + '</div><div class="g">' + (showGold ? gold[i] : "") + "</div></div>";
+    }).join("");
+    document.querySelectorAll(".c").forEach(function (el) { el.onclick = function () { tags[+el.dataset.i] = brush; checked = false; draw(); }; });
+    var d = decode(tags);
+    document.getElementById("ents").innerHTML = d.ents.map(function (e) { return '<span class="' + e[2] + '">' + chars.slice(e[0], e[1]).join("") + "（" + e[2] + "）</span>"; }).join("") || "<span style='color:#78909c'>（还没有实体）</span>";
+    document.getElementById("warn").innerHTML = d.warn.map(function (w) { return "<li class='bad'>" + w + "</li>"; }).join("");
+  }
+  function prf(tp, np, ng) { var p = np ? tp / np : 0, r = ng ? tp / ng : 0, f = p + r ? 2 * p * r / (p + r) : 0; return "P = " + tp + "/" + np + " = " + p.toFixed(3) + "，R = " + tp + "/" + ng + " = " + r.toFixed(3) + "，F1 = " + f.toFixed(3); }
+  function check() {
+    checked = true; draw();
+    var pred = decode(tags).ents, chars = Array.from(S.t), name = function (e) { return chars.slice(e[0], e[1]).join("") + "（" + e[2] + "）"; };
+    var strict = pred.filter(function (p) { return S.e.some(function (g) { return g[0] === p[0] && g[1] === p[1] && g[2] === p[2]; }); });
+    var loose = pred.filter(function (p) { return S.e.some(function (g) { return g[2] === p[2] && p[0] < g[1] && g[0] < p[1]; }); });
+    var miss = S.e.filter(function (g) { return !pred.some(function (p) { return g[0] === p[0] && g[1] === p[1] && g[2] === p[2]; }); });
+    var wrongN = tags.filter(function (l, i) { return l !== gold[i]; }).length;
+    document.getElementById("res").innerHTML = (wrongN ? "<span class='bad'>有 " + wrongN + " 个字的标签和标准答案不同（红色）。</span>" : "<span class='ok'>全部正确！</span>") +
+      "<div>标准答案 " + S.e.length + " 个实体，你标出 " + pred.length + " 个。</div>" +
+      (miss.length ? "<div>没有完全标对的：" + miss.map(name).join("、") + "</div>" : "") +
+      "<div style='margin-top:4px'><b>严格标准</b>（边界和类型都对）：" + prf(strict.length, pred.length, S.e.length) + "</div>" +
+      "<div><b>宽松标准</b>（有重叠且类型相同）：" + prf(loose.length, pred.length, S.e.length) + "</div>";
+  }
+  document.getElementById("pal").innerHTML = "<span class='lbl' style='font-size:12px;color:#78909c'>标签：</span>" + LABELS.map(function (l) { return '<button class="' + (l === "O" ? "O" : l.slice(2)) + (l === brush ? " on" : "") + '">' + l + "</button>"; }).join("");
+  document.querySelectorAll("#pal button").forEach(function (b) { b.onclick = function () { brush = b.textContent; document.querySelectorAll("#pal button").forEach(function (x) { x.classList.toggle("on", x === b); }); }; });
+  document.getElementById("ex").innerHTML = "<span class='lbl'>句子：</span>" + SENTS.map(function (s, i) { return "<button data-i='" + i + "'>" + s.t + "</button>"; }).join("");
+  document.querySelectorAll("#ex button").forEach(function (b) { b.onclick = function () { load(+b.dataset.i); }; });
+  document.getElementById("check").onclick = check;
+  document.getElementById("show").onclick = function () { showGold = !showGold; draw(); };
+  document.getElementById("clear").onclick = function () { tags = tags.map(function () { return "O"; }); checked = false; draw(); };
+  load(0);
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

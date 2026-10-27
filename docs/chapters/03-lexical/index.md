@@ -164,6 +164,11 @@ description: 学习中文分词的难点与方法、分词评测、词性标注�
 - 优点：简单、速度快、容易理解，可以通过往词典里加词来快速修正错误；
 - 缺点：完全依赖词典，**无法识别未登录词**；遇到歧义时，只能靠简单规则，不能真正理解上下文。
 
+<iframe class="sim-frame" src="../../sims/max-match/main.html" height="700" loading="lazy" title="最大匹配分词"></iframe>
+
+**交互动画：最大匹配分词**。选正向或逆向，点“下一步”逐次查词典；下方同时给出正向、逆向和双向的结果。可以删掉或添加词典里的词，看结果怎样变化。[全屏打开](../../sims/max-match/main.html){ target=_blank } · [教学说明](../../sims/max-match/index.md)
+{ .sim-caption }
+
 ### 3.3.2 基于统计的方法：字标注与隐马尔可夫模型
 
 统计方法换了一个思路：**不把分词看成“查词典”，而是看成“给每个字贴标签”**。<sup class="cite">[[4]](#ref3-4)</sup>
@@ -410,6 +415,11 @@ low (5)    lower (2)    newest (6)    widest (3)
 **第 3 步**，“l o”出现 5 + 2 = 7 次，合并为“lo”；**第 4 步**，“lo w”出现 7 次，合并为“low”……
 
 如此反复。最终，高频词（如 low）会成为一个完整的片段，而 newest、widest 会被表示为“new + est”“wid + est”，“est”这个常见后缀被单独学了出来。中文的处理方式类似：常见的词（“自然”“语言”）会成为一个片段，罕见字则保持为单字或进一步拆成字节。
+
+<iframe class="sim-frame" src="../../sims/bpe-merge/main.html" height="720" loading="lazy" title="BPE 合并过程"></iframe>
+
+**交互动画：BPE 合并过程**。每点一次“合并一次”，就统计所有相邻片段对的次数，把最多的一对合并。默认语料就是上面的例子，也可以换成中文词或自己的语料。[全屏打开](../../sims/bpe-merge/main.html){ target=_blank } · [教学说明](../../sims/bpe-merge/index.md)
+{ .sim-caption }
 
 ### 3.6.3 Token：大模型的“计量单位”
 

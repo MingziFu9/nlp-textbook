@@ -9,5 +9,22 @@ description: 本书配套的交互动画，可以在浏览器里直接操作，�
 
 | 章 | 动画 | 你可以做什么 |
 |---|---|---|
+| 第 1 章 | [NLP 发展时间线](nlp-timeline/index.md) | 点开四个时代和 13 个大事件，用同一个问题体验规则、统计、深度学习和大模型的不同思路 |
+| 第 2 章 | [文本清洗流水线](cleaning-pipeline/index.md) | 逐步执行中文评论清洗流程，体会清洗顺序和“保留中文标点”等选择的影响 |
+| 第 3 章 | [最大匹配分词](max-match/index.md) | 一次一次“查词典”，看正向、逆向、双向最大匹配怎样切分歧义句 |
+| 第 3 章 | [BPE 合并过程](bpe-merge/index.md) | 一步步合并最常相邻的片段，看 BPE 怎样从字母学出“est”“low”这样的子词 |
+| 第 4 章 | [依存句法树](dependency-parser/index.md) | 自己选择“移进、左弧、右弧”，用栈一步步搭出依存树 |
+| 第 5 章 | [TF-IDF 计算器](tfidf-calculator/index.md) | 修改小语料，实时计算 TF-IDF；拖动参数，看 BM25 的词频饱和与长度惩罚 |
+| 第 5 章 | [词向量与余弦相似度](word-vectors/index.md) | 拖动向量体会“只看方向不看长短”，在词语地图上找近义词、做类比 |
 | 第 6 章 | [阈值与混淆矩阵](threshold-confusion/index.md) | 拖动阈值，看混淆矩阵和精确率、召回率怎样“此消彼长” |
 | 第 6 章 | [情感词典打分演示](lexicon-scorer/index.md) | 一步步看否定词怎样“翻转”、程度副词怎样“加权” |
+| 第 7 章 | [BIO 标注练习](bio-tagging/index.md) | 亲手给每个字贴 B/I/O 标签，检查错误，并按严格、宽松标准计算 F1 |
+| 第 8 章 | [神经元与激活函数](neuron-activation/index.md) | 调权重、换激活函数，看神经元的输出；让感知机学“异或”，亲眼看它学不会 |
+| 第 8 章 | [RNN 逐步展开](rnn-unroll/index.md) | 一个词一个词地看隐藏状态怎样更新，并直观看到梯度消失 |
+| 第 9 章 | [自注意力热力图](self-attention/index.md) | 点一个词，看它的注意力权重是怎样一步步算出来的 |
+| 第 10 章 | [BLEU 计算器](bleu-calculator/index.md) | 改写译文，实时看 n 元组命中、简短惩罚和 BLEU 的计算过程 |
+| 第 10 章 | [贪心与束搜索](beam-search/index.md) | 用一棵小小的候选树，比较贪心搜索与不同束宽的束搜索 |
+| 第 10 章 | [温度与 Top-p 采样](temperature-sampling/index.md) | 拖动温度、Top-k、Top-p，看概率分布怎样变尖或变平，再抽样体验 |
+| 第 11 章 | [RAG 切块实验](rag-chunking/index.md) | 调整切块大小和重叠，用 8 道测试题看检索命中率和提示词长度怎样变化 |
+| 第 11 章 | [ReAct 执行回放](react-replay/index.md) | 回放智能体“思考—行动—观察”的全过程，同时看到背后的对话历史 |
+| 第 12 章 | [脱敏与提示注入攻防](privacy-injection/index.md) | 给客服工单做脱敏；运行注入检测规则，看一条攻击要穿过几道防线 |

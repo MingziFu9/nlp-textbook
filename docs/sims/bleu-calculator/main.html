@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BLEU 计算器</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .lab { font-size:12.5px; color:var(--muted); margin-top:6px; }
+  .toks { display:flex; flex-wrap:wrap; gap:3px; margin-top:4px; }
+  .tk { padding:1px 6px; border-radius:4px; background:#eceff1; font-family:Consolas,monospace; font-size:13px; }
+  .tk.hit { background:#c8e6c9; } .tk.miss { background:#ffcdd2; }
+  .tk.hl { outline:2px solid var(--accent); }
+  .ng { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+  .ng span { font-family:Consolas,monospace; font-size:12px; padding:1px 6px; border-radius:10px; cursor:default; }
+  .ng .hit { background:#c8e6c9; } .ng .miss { background:#ffcdd2; } .ng .clip { background:#fff3e0; }
+  table.t td { font-variant-numeric:tabular-nums; }
+  .formula { font-size:14px; line-height:2; }
+</style>
+</head>
+<body>
+<h1>BLEU 计算器：数一数 n 元组重合了多少</h1>
+<div class="sub">原文“人工智能正在改变我们学习和工作的方式。”，两个参考译文和 4 个待评价译文都来自实验 10-1。选一个译文，或者自己改写，看 1~4 元精确率、简短惩罚和 BLEU 怎样变化（平滑方法与 NLTK 的 method1 相同）。</div>
+
+<div class="lab">参考译文 1</div><input type="text" id="r1" value="artificial intelligence is changing the way we learn and work .">
+<div class="lab">参考译文 2</div><input type="text" id="r2" value="ai is transforming how we study and work .">
+<div class="lab">待评价的机器译文</div><input type="text" id="c" value="artificial intelligence is changing how we learn and work .">
+<div class="row ex" id="ex"></div>
+
+<div class="grid2">
+  <div class="box">
+    <h2>n 元组命中情况</h2>
+    <div class="row" id="nsel"></div>
+    <div class="ng" id="ng"></div>
+    <div class="note" style="margin:0">绿色：在参考译文里出现；红色：没出现；橙色：出现了，但次数超过参考译文里的次数，多出来的不算（“修正”的含义）。</div>
+  </div>
+  <div class="box">
+    <h2>计算过程</h2>
+    <table class="t" id="tbl"></table>
+    <div class="formula" id="f"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var EX = [["A 意思对、措辞接近","artificial intelligence is changing how we learn and work ."],["B 意思对、换了说法","ai has been reshaping our ways of studying and working ."],["C 词都对、顺序乱","work and learn we way the changing is intelligence artificial ."],["D 太短","artificial intelligence is changing ."],["加一个 not","artificial intelligence is not changing the way we learn and work ."],["the the the","the the the the the the the the the the ."]];
+  var N = 1;
+  function tok(s) { return s.trim().toLowerCase().split(/\s+/).filter(Boolean); }
+  function grams(t, n) { var g = []; for (var i = 0; i + n <= t.length; i++) g.push(t.slice(i, i + n).join(" ")); return g; }
+  function count(a) { var c = {}; a.forEach(function (x) { c[x] = (c[x] || 0) + 1; }); return c; }
+  function calc() {
+    var refs = [tok(document.getElementById("r1").value), tok(document.getElementById("r2").value)].filter(function (r) { return r.length; }), cand = tok(document.getElementById("c").value), res = [];
+    for (var n = 1; n <= 4; n++) {
+      var cg = grams(cand, n), cc = count(cg), maxRef = {};
+      refs.forEach(function (r) { var rc = count(grams(r, n)); Object.keys(rc).forEach(function (g) { maxRef[g] = Math.max(maxRef[g] || 0, rc[g]); }); });
+      var hit = 0, used = {}, marks = cg.map(function (g) { used[g] = (used[g] || 0) + 1; if (!maxRef[g]) return "miss"; if (used[g] > maxRef[g]) return "clip"; hit++; return "hit"; });
+      res.push({ n:n, hit:hit, total:cg.length, grams:cg, marks:marks });
+    }
+    // 参考长度取与译文长度最接近的（一样近时取较短的），与 NLTK 相同
+    var c = cand.length, r = refs.map(function (x) { return x.length; }).sort(function (a, b) { return Math.abs(a - c) - Math.abs(b - c) || a - b; })[0] || 0;
+    var bp = c === 0 ? 0 : c > r ? 1 : Math.exp(1 - r / c);
+    var logs = res.map(function (x) { return x.total ? Math.log(x.hit ? x.hit / x.total : 0.1 / x.total) : -Infinity; });
+    var geo = Math.exp(logs.reduce(function (a, b) { return a + b; }) / 4), bleu = bp * geo;
+    return { res:res, c:c, r:r, bp:bp, geo:geo, bleu:isFinite(bleu) ? bleu : 0, cand:cand };
+  }
+  function draw() {
+    var R = calc(), cur = R.res[N - 1];
+    document.getElementById("nsel").innerHTML = [1, 2, 3, 4].map(function (n) { return '<button data-n="' + n + '"' + (n === N ? ' class="on"' : "") + ">" + n + " 元组</button>"; }).join("");
+    document.querySelectorAll("[data-n]").forEach(function (b) { b.onclick = function () { N = +b.dataset.n; draw(); }; });
+    document.getElementById("ng").innerHTML = cur.grams.map(function (g, i) { return '<span class="' + cur.marks[i] + '">' + g + "</span>"; }).join("") || "<span>（译文太短，没有 " + N + " 元组）</span>";
+    document.getElementById("tbl").innerHTML = "<tr><th>n</th><th>命中 / 总数</th><th>精确率 pₙ</th></tr>" + R.res.map(function (x) {
+      return "<tr><td>" + x.n + "</td><td>" + x.hit + " / " + x.total + "</td><td>" + (x.total ? (x.hit ? (x.hit / x.total).toFixed(3) : "0 → 平滑为 " + (0.1 / x.total).toFixed(4)) : "—") + "</td></tr>";
+    }).join("");
+    document.getElementById("f").innerHTML = "几何平均 = (p₁·p₂·p₃·p₄)<sup>1/4</sup> = <b>" + R.geo.toFixed(3) + "</b><br>" +
+      "译文长度 c = " + R.c + "，最接近的参考长度 r = " + R.r + "<br>简短惩罚 BP = " + (R.c > R.r ? "1（译文不比参考短）" : "e<sup>1 − " + R.r + "/" + R.c + "</sup> = " + R.bp.toFixed(3)) +
+      "<br>BLEU = " + R.bp.toFixed(3) + " × " + R.geo.toFixed(3) + " = <span class='big'>" + R.bleu.toFixed(3) + "</span>";
+  }
+  document.getElementById("ex").innerHTML = "<span class='lbl'>试试：</span>" + EX.map(function (e, i) { return '<button data-i="' + i + '">' + e[0] + "</button>"; }).join("");
+  document.querySelectorAll("#ex button").forEach(function (b) { b.onclick = function () { document.getElementById("c").value = EX[+b.dataset.i][1]; draw(); }; });
+  ["r1", "r2", "c"].forEach(function (id) { document.getElementById(id).oninput = draw; });
+  draw();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

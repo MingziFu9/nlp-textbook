@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>最大匹配分词</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .sent { display:flex; flex-wrap:wrap; gap:2px; margin-top:8px; font-size:22px; }
+  .ch { width:34px; height:40px; line-height:40px; text-align:center; border:1px solid var(--line); border-radius:4px; background:#fff; transition:all .15s; }
+  .ch.done { background:#e8f5e9; border-color:#a5d6a7; }
+  .ch.win { background:#fff3e0; border-color:var(--warn); }
+  .ch.hit { background:#c8e6c9; border-color:var(--pos); font-weight:bold; }
+  .ch.cut { margin-right:10px; }
+  .log { font-size:13px; margin-top:6px; max-height:220px; overflow:auto; }
+  .log div { padding:1px 0; }
+  .res { font-size:16px; margin-top:6px; }
+  .res .w { display:inline-block; padding:1px 6px; margin:2px; border-radius:4px; background:var(--soft); }
+  .res .w.s { background:#fff3e0; }
+  .dict { font-size:12.5px; line-height:1.9; }
+  .dict span { display:inline-block; padding:0 6px; margin:1px; border:1px solid var(--line); border-radius:10px; cursor:pointer; }
+  .dict span:hover { border-color:var(--neg); color:var(--neg); text-decoration:line-through; }
+</style>
+</head>
+<body>
+<h1>最大匹配分词：拿句子去词典里“查”，长词优先</h1>
+<div class="sub">词典与实验 3-1 相同。选一种方向，点“下一步”逐次查词：橙色是正在查的片段，查不到就缩短一个字。</div>
+
+<div class="row"><input type="text" id="txt" value="研究生命的起源" aria-label="句子"></div>
+<div class="row ex" id="ex"></div>
+<div class="row">
+  <button id="mF" class="on">正向（从左往右）</button><button id="mB">逆向（从右往左）</button>
+  <span style="flex:1"></span>
+  <button class="main" id="step">下一步 ▶</button><button id="fin">直接出结果</button><button id="reset">重来</button>
+</div>
+<div class="sent" id="sent"></div>
+<div class="log" id="log"></div>
+
+<div class="box"><h2>三种方法对比</h2><div id="cmp"></div></div>
+
+<details class="box"><summary>词典（<span id="dn"></span> 个词，点一个词可删除）</summary>
+  <div class="dict" id="dict"></div>
+  <div class="row"><input type="text" id="nw" placeholder="加一个词，例如：长江" style="max-width:180px"><button id="addw">加入词典</button></div>
+</details>
+
+<script>
+(function () {
+  var DICT = ["南京","南京市","市长","长江","大桥","长江大桥","江大桥","研究","研究生","生命","命","的","起源","结婚","和","和尚","尚未","未","乒乓","乒乓球","乒乓球拍","球拍","拍卖","卖","完","了","卖完"];
+  var EX = ["研究生命的起源","南京市长江大桥","结婚的和尚未结婚的","乒乓球拍卖完了"];
+  var mode = "F", txt = document.getElementById("txt"), trace = [], pos = 0;
+  function maxLen() { return Math.max.apply(null, DICT.map(function (w) { return w.length; })); }
+
+  // 生成整个切分过程：每一次“查词典”都是一步
+  function plan(s, m) {
+    var L = maxLen(), steps = [], words = [];
+    if (m === "F") {
+      var i = 0;
+      while (i < s.length) {
+        for (var n = Math.min(L, s.length - i); n > 0; n--) {
+          var p = s.substr(i, n), ok = DICT.indexOf(p) >= 0 || n === 1;
+          steps.push({ a:i, b:i + n, p:p, ok:ok, single:ok && DICT.indexOf(p) < 0 });
+          if (ok) { words.push(p); i += n; break; }
+        }
+      }
+    } else {
+      var j = s.length;
+      while (j > 0) {
+        for (var n2 = Math.min(L, j); n2 > 0; n2--) {
+          var q = s.substring(j - n2, j), ok2 = DICT.indexOf(q) >= 0 || n2 === 1;
+          steps.push({ a:j - n2, b:j, p:q, ok:ok2, single:ok2 && DICT.indexOf(q) < 0 });
+          if (ok2) { words.unshift(q); j -= n2; break; }
+        }
+      }
+    }
+    return { steps:steps, words:words };
+  }
+  function bidir(f, b) {
+    if (f.join("/") === b.join("/")) return { w:f, why:"正向和逆向结果相同，直接采用。" };
+    if (f.length !== b.length) return f.length < b.length ? { w:f, why:"词数不同，选词数少的（正向 " + f.length + " 个 &lt; 逆向 " + b.length + " 个）。" } : { w:b, why:"词数不同，选词数少的（逆向 " + b.length + " 个 &lt; 正向 " + f.length + " 个）。" };
+    var sf = f.filter(function (w) { return w.length === 1; }).length, sb = b.filter(function (w) { return w.length === 1; }).length;
+    return sf < sb ? { w:f, why:"词数都是 " + f.length + " 个，选单字少的（正向 " + sf + " 个单字 &lt; 逆向 " + sb + " 个）。" }
+                   : { w:b, why:"词数都是 " + f.length + " 个，选单字少的（逆向 " + sb + " 个单字" + (sb === sf ? " = 正向，相同时取逆向" : " &lt; 正向 " + sf + " 个") + "）。" };
+  }
+  function words(ws) { return ws.map(function (w) { return '<span class="w' + (w.length === 1 ? " s" : "") + '">' + w + "</span>"; }).join(""); }
+
+  function reset() { trace = plan(txt.value.replace(/\s/g, ""), mode).steps; pos = 0; drawStep(); drawCmp(); }
+  function drawStep() {
+    var s = txt.value.replace(/\s/g, ""), done = {}, cuts = {}, cur = pos > 0 ? trace[pos - 1] : null, logs = [];
+    for (var k = 0; k < pos; k++) {
+      var t = trace[k];
+      if (t.ok) { for (var c = t.a; c < t.b; c++) done[c] = 1; cuts[t.b - 1] = 1; cuts[t.a - 1] = 1; }
+      logs.push("<div>" + (t.ok ? "✓" : "✗") + " 查“<b>" + t.p + "</b>”" + (t.ok ? (t.single ? " → 只剩 1 个字，单独成词" : " → 词典里有，切出") : " → 查不到，" + (mode === "F" ? "去掉最后一个字" : "去掉最前面一个字")) + "</div>");
+    }
+    document.getElementById("sent").innerHTML = s.split("").map(function (ch, i) {
+      var c = "ch"; if (done[i]) c += " done";
+      if (cur && i >= cur.a && i < cur.b) c += cur.ok ? " hit" : " win";
+      if (cuts[i] && i < s.length - 1) c += " cut";
+      return '<span class="' + c + '">' + ch + "</span>";
+    }).join("");
+    var L = document.getElementById("log");
+    L.innerHTML = (logs.length ? logs.join("") : "<div style='color:#78909c'>词典最长词有 " + maxLen() + " 个字，所以每次先取 " + maxLen() + " 个字去查。</div>") +
+      (pos === trace.length && trace.length ? "<div class='res'>结果：" + words(plan(s, mode).words) + "</div>" : "");
+    L.scrollTop = L.scrollHeight;
+    document.getElementById("step").disabled = pos >= trace.length;
+  }
+  function drawCmp() {
+    var s = txt.value.replace(/\s/g, ""), f = plan(s, "F").words, b = plan(s, "B").words, bi = bidir(f, b);
+    document.getElementById("cmp").innerHTML = "<div class='res'>正向：" + words(f) + "</div><div class='res'>逆向：" + words(b) + "</div><div class='res'>双向：" + words(bi.w) + "</div><div class='note'>双向规则：" + bi.why + "橙色为单字。</div>";
+  }
+  function drawDict() {
+    document.getElementById("dn").textContent = DICT.length;
+    document.getElementById("dict").innerHTML = DICT.map(function (w) { return "<span>" + w + "</span>"; }).join("");
+    document.querySelectorAll("#dict span").forEach(function (el) { el.onclick = function () { DICT.splice(DICT.indexOf(el.textContent), 1); drawDict(); reset(); }; });
+  }
+  document.getElementById("ex").innerHTML = "<span class='lbl'>试试：</span>" + EX.map(function (e) { return "<button>" + e + "</button>"; }).join("");
+  document.querySelectorAll("#ex button").forEach(function (b) { b.onclick = function () { txt.value = b.textContent; reset(); }; });
+  function setMode(m) { mode = m; document.getElementById("mF").classList.toggle("on", m === "F"); document.getElementById("mB").classList.toggle("on", m === "B"); reset(); }
+  document.getElementById("mF").onclick = function () { setMode("F"); };
+  document.getElementById("mB").onclick = function () { setMode("B"); };
+  document.getElementById("step").onclick = function () { if (pos < trace.length) pos++; drawStep(); };
+  document.getElementById("fin").onclick = function () { pos = trace.length; drawStep(); };
+  document.getElementById("reset").onclick = reset;
+  document.getElementById("addw").onclick = function () { var w = document.getElementById("nw").value.trim(); if (w && DICT.indexOf(w) < 0) { DICT.push(w); drawDict(); reset(); } document.getElementById("nw").value = ""; };
+  txt.oninput = reset;
+  drawDict(); reset();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

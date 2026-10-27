@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TF-IDF 计算器</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .docs { display:flex; flex-direction:column; gap:3px; }
+  .doc { display:flex; gap:6px; align-items:center; }
+  .doc input[type=radio] { accent-color:var(--accent); }
+  .doc input[type=text] { font-size:13px; padding:3px 6px; }
+  table.t { width:100%; } tr.k td { background:#fff8e1; } td.neg { color:var(--neg); }
+  .sl { display:grid; grid-template-columns:7.5em 1fr 3.5em; gap:6px; align-items:center; font-size:13px; }
+  svg { width:100%; display:block; }
+</style>
+</head>
+<body>
+<h1>TF-IDF 计算器：出现得多、又不常见的词才是关键词</h1>
+<div class="sub">下面 6 篇“文章”已经分好词（用空格隔开），可以直接修改。选中一篇，表格会算出它每个词的 TF、IDF 和 TF-IDF，黄色是前 3 个关键词。</div>
+
+<div class="docs" id="docs"></div>
+<div class="row">
+  <span style="font-size:13px">IDF 公式：</span>
+  <button id="fBook" class="on">教材：log₁₀(N ÷ (df+1))</button>
+  <button id="fSk">scikit-learn：ln((1+N) ÷ (1+df)) + 1</button>
+</div>
+<table class="t" id="tbl"></table>
+<div class="note" id="tip"></div>
+
+<div class="box">
+  <h2>从 TF-IDF 到 BM25：词频“饱和”与长度惩罚</h2>
+  <div class="sl"><span>词频 tf</span><input type="range" id="tf" min="1" max="20" value="5"><b id="tfv"></b></div>
+  <div class="sl"><span>k₁（饱和快慢）</span><input type="range" id="k1" min="0" max="3" step="0.1" value="1.2"><b id="k1v"></b></div>
+  <div class="sl"><span>b（长度惩罚）</span><input type="range" id="b" min="0" max="1" step="0.05" value="0.75"><b id="bv"></b></div>
+  <div class="sl"><span>文章长度 ÷ 平均</span><input type="range" id="len" min="0.25" max="3" step="0.25" value="1"><b id="lenv"></b></div>
+  <svg id="curve" viewBox="0 0 600 200"></svg>
+  <div class="msg" id="bm"></div>
+</div>
+
+<script>
+(function () {
+  var DOCS = [
+    "华为 发布 的 新款 手机 搭载 了 大模型 大模型 可以 帮 用户 写 文章",
+    "这家 店 的 外卖 送餐 很快 味道 也 很 好吃",
+    "外卖 小哥 的 送餐 速度 太 慢 了 饭菜 都 凉 了",
+    "学校 图书馆 的 开放 时间 是 早上 八点 到 晚上 十点",
+    "国产 大模型 的 中文 能力 进步 很快 手机 厂商 纷纷 接入 大模型",
+    "图书馆 新 买 了 一批 关于 大模型 的 图书"
+  ];
+  var cur = 0, sk = false;
+  var box = document.getElementById("docs");
+  DOCS.forEach(function (d, i) {
+    var r = document.createElement("label"); r.className = "doc";
+    r.innerHTML = '<input type="radio" name="d"' + (i === 0 ? " checked" : "") + '> <span style="font-size:12px;color:#78909c">文章' + (i + 1) + '</span><input type="text" value="' + d + '">';
+    r.querySelector("input[type=radio]").onchange = function () { cur = i; calc(); };
+    r.querySelector("input[type=text]").oninput = function (e) { DOCS[i] = e.target.value; calc(); };
+    box.appendChild(r);
+  });
+  function f(x) { return (Math.round(x * 1000) / 1000).toFixed(3); }
+  function calc() {
+    var toks = DOCS.map(function (d) { return d.trim().split(/\s+/).filter(Boolean); }), N = toks.length, mine = toks[cur], cnt = {}, order = [];
+    mine.forEach(function (w) { if (!(w in cnt)) { cnt[w] = 0; order.push(w); } cnt[w]++; });
+    var rows = order.map(function (w) {
+      var df = toks.filter(function (t) { return t.indexOf(w) >= 0; }).length, tf = cnt[w] / mine.length;
+      var idf = sk ? Math.log((1 + N) / (1 + df)) + 1 : Math.log10(N / (df + 1));
+      return { w:w, c:cnt[w], tf:tf, df:df, idf:idf, s:tf * idf };
+    }).sort(function (a, b) { return b.s - a.s; });
+    document.getElementById("tbl").innerHTML = "<tr><th>词</th><th>出现次数</th><th>TF = 次数 ÷ " + mine.length + "</th><th>包含它的文章数 df</th><th>IDF</th><th>TF-IDF</th></tr>" +
+      rows.map(function (r, i) { return "<tr" + (i < 3 ? " class='k'" : "") + "><td>" + r.w + "</td><td>" + r.c + "</td><td>" + f(r.tf) + "</td><td>" + r.df + " / " + N + "</td><td" + (r.idf < 0 ? " class='neg'" : "") + ">" + f(r.idf) + "</td><td" + (r.s < 0 ? " class='neg'" : "") + "><b>" + f(r.s) + "</b></td></tr>"; }).join("");
+    document.getElementById("tip").innerHTML = sk
+      ? "scikit-learn 默认用这个“平滑”公式，IDF 不会小于 1，所以“的”也有一点权重；它还会把整个向量归一化，数值会和这里不同。"
+      : "注意：我们只有 " + N + " 篇文章，出现在每篇里的词（如“的”）IDF = log(" + N + "÷" + (N + 1) + ") 略小于 0（红色）。在教材 1000 篇新闻的例子里，它约等于 0。不管哪种公式，排在前面的关键词基本一致。";
+  }
+  function setF(v) { sk = v; document.getElementById("fBook").classList.toggle("on", !v); document.getElementById("fSk").classList.toggle("on", v); calc(); }
+  document.getElementById("fBook").onclick = function () { setF(false); };
+  document.getElementById("fSk").onclick = function () { setF(true); };
+
+  // BM25 词频部分
+  function bm(tf, k1, b, L) { return tf * (k1 + 1) / (tf + k1 * (1 - b + b * L)); }
+  function draw() {
+    var tf = +document.getElementById("tf").value, k1 = +document.getElementById("k1").value, b = +document.getElementById("b").value, L = +document.getElementById("len").value;
+    document.getElementById("tfv").textContent = tf; document.getElementById("k1v").textContent = k1.toFixed(1);
+    document.getElementById("bv").textContent = b.toFixed(2); document.getElementById("lenv").textContent = L.toFixed(2);
+    var W = 600, H = 200, ml = 34, mb = 24, xmax = 20, ymax = 4.5;
+    var X = function (t) { return ml + (t / xmax) * (W - ml - 10); }, Y = function (v) { return H - mb - (v / ymax) * (H - mb - 10); };
+    var s = '<line x1="' + ml + '" y1="' + Y(0) + '" x2="' + (W - 10) + '" y2="' + Y(0) + '" stroke="#90a4ae"/><line x1="' + ml + '" y1="' + Y(0) + '" x2="' + ml + '" y2="10" stroke="#90a4ae"/>';
+    for (var t = 0; t <= 20; t += 5) s += '<text x="' + X(t) + '" y="' + (H - 6) + '" font-size="11" text-anchor="middle" fill="#78909c">' + t + "</text>";
+    for (var v = 0; v <= 4; v++) s += '<text x="' + (ml - 6) + '" y="' + (Y(v) + 4) + '" font-size="11" text-anchor="end" fill="#78909c">' + v + "</text>";
+    s += '<text x="' + (W - 12) + '" y="' + (H - 30) + '" font-size="11" text-anchor="end" fill="#78909c">词频 tf</text>';
+    // TF-IDF 式的线性增长（同样把 tf=1 时的得分定为 1，方便对比）
+    s += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(ymax) + '" y2="' + Y(ymax) + '" stroke="#ef6c00" stroke-dasharray="5 4"/><text x="' + (X(ymax) + 4) + '" y="18" font-size="11" fill="#ef6c00">按比例增长（TF-IDF）</text>';
+    var p = []; for (var x = 0; x <= xmax; x += 0.25) p.push(X(x) + "," + Y(bm(x, k1, b, L)));
+    s += '<polyline points="' + p.join(" ") + '" fill="none" stroke="#3f51b5" stroke-width="2.5"/>';
+    s += '<line x1="' + ml + '" y1="' + Y(k1 + 1) + '" x2="' + (W - 10) + '" y2="' + Y(k1 + 1) + '" stroke="#3f51b5" stroke-dasharray="2 4"/><text x="' + (W - 12) + '" y="' + (Y(k1 + 1) - 4) + '" font-size="11" text-anchor="end" fill="#3f51b5">上限 k₁+1 = ' + (k1 + 1).toFixed(1) + "</text>";
+    s += '<circle cx="' + X(tf) + '" cy="' + Y(bm(tf, k1, b, L)) + '" r="6" fill="#e53935"/>';
+    document.getElementById("curve").innerHTML = s;
+    var t1 = bm(1, k1, b, L), t2 = bm(2, k1, b, L), t5 = bm(5, k1, b, L), t10 = bm(10, k1, b, L);
+    document.getElementById("bm").innerHTML = "当前 tf = " + tf + " 时，词频得分 = <b>" + bm(tf, k1, b, L).toFixed(2) + "</b>。tf = 1 / 2 / 5 / 10 时分别为 " +
+      [t1, t2, t5, t10].map(function (x) { return x.toFixed(2); }).join(" / ") + "：从 1 到 2 增加 " + (t2 - t1).toFixed(2) + "，从 5 到 10 只增加 " + (t10 - t5).toFixed(2) + "。" +
+      (L > 1 ? "文章比平均长，得分被压低。" : L < 1 ? "文章比平均短，得分升高。" : "") + (b === 0 ? "b = 0，完全不考虑长度。" : "");
+  }
+  ["tf", "k1", "b", "len"].forEach(function (id) { document.getElementById(id).oninput = draw; });
+  calc(); draw();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

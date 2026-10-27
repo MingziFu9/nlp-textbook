@@ -395,6 +395,11 @@ flowchart TB
 
 最后一步“**抽样人工检查**”千万不能省。清洗规则总有考虑不到的情况，随机抽查 50 到 100 条，能发现很多意想不到的问题。
 
+<iframe class="sim-frame" src="../../sims/cleaning-pipeline/main.html" height="760" loading="lazy" title="文本清洗流水线"></iframe>
+
+**交互动画：文本清洗流水线**。一步一步执行 2.6.5 节的清洗流程，黄色是每一步改动的地方。勾选“先去重，再清洗”，看看错误的顺序会漏掉哪些重复评论。[全屏打开](../../sims/cleaning-pipeline/main.html){ target=_blank } · [教学说明](../../sims/cleaning-pipeline/index.md)
+{ .sim-caption }
+
 ### 2.6.6 中文停用词与文本规范化
 
 中文同样有停用词，如“的”“了”“是”“在”“和”“就”“都”，以及“啊”“呢”“吧”等语气词。常用的中文停用词表有哈工大停用词表、百度停用词表、四川大学停用词表等，配套资源中提供了一份综合整理的中文停用词表 `cn_stopwords.txt`（746 个词）。中文的停用词要在**分词之后**才能去除，我们在第 3 章实验中使用。

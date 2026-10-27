@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>温度与 Top-p 采样</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .sl { display:grid; grid-template-columns:9em 1fr 3.5em; gap:6px; align-items:center; font-size:13px; }
+  .barrow { grid-template-columns:4em 1fr 7.5em; }
+  .barrow.out .bar { background:#cfd8dc; }
+  .barrow.out span:first-child { color:#b0bec5; text-decoration:line-through; }
+  .barrow .orig { height:3px; background:#ef6c00; margin-top:2px; border-radius:2px; }
+  .gen { font-size:16px; line-height:2; }
+  .gen span { display:inline-block; padding:0 5px; margin:1px; border-radius:4px; background:var(--soft); }
+</style>
+</head>
+<body>
+<h1>温度与 Top-k / Top-p：模型给出了概率，到底选哪个字？</h1>
+<div class="sub">下面是语言模型在“味道”后面给出的下一个字的概率（按实验 10-3 的输出设定，T = 1 时“不”0.20、“还”0.15……）。调节参数，看概率怎样变化、哪些字被排除（灰色），再点“抽 20 次”看实际选出的字。</div>
+
+<div class="sl"><span>温度 T</span><input type="range" id="T" min="0" max="2" step="0.05" value="1"><b id="Tv"></b></div>
+<div class="sl"><span>Top-k（0 = 不限）</span><input type="range" id="K" min="0" max="10" step="1" value="0"><b id="Kv"></b></div>
+<div class="sl"><span>Top-p（1 = 不限）</span><input type="range" id="P" min="0.1" max="1" step="0.05" value="1"><b id="Pv"></b></div>
+<div class="row ex"><span class="lbl">教材建议：</span><button data-s="0.2,0,1">翻译 / 抽取：T = 0.2</button><button data-s="0.5,0,1">问答 / 摘要：T = 0.5</button><button data-s="0.9,0,0.9">写作：T = 0.9，Top-p = 0.9</button><button data-s="0,0,1">T = 0（贪心）</button></div>
+
+<div class="grid2">
+  <div class="box"><h2>“味道”后面的下一个字</h2><div id="bars"></div><div class="note" id="tail"></div></div>
+  <div class="box">
+    <h2>抽一抽</h2>
+    <div class="row"><button class="main" id="draw">抽 20 次</button><button id="clr">清空</button></div>
+    <div class="gen" id="gen"></div>
+    <div class="msg" id="stat"></div>
+  </div>
+</div>
+<div class="note">橙色细线是 T = 1 时的原始概率，蓝色是调整后实际用来抽取的概率（被排除的字概率归零，其余重新归一化）。</div>
+
+<script>
+(function () {
+  // 原始概率：前 15 个字单独列出，另有 50 个“其他字”平分剩下的概率
+  var NAMED = [["不",.20],["还",.15],["一",.11],["很",.10],["也",.09],["好",.03],["真",.025],["挺",.02],["太",.018],["非",.015],["特",.012],["是",.01],["有",.008],["比",.007],["怎",.005]];
+  var rest = 1 - NAMED.reduce(function (s, x) { return s + x[1]; }, 0), NOTHER = 50;
+  var ALL = NAMED.concat(Array.from({ length:NOTHER }, function (_, i) { return ["其他" + (i + 1), rest / NOTHER]; }));
+  var counts = {}, seq = [];
+  function probs() {
+    var T = +document.getElementById("T").value, K = +document.getElementById("K").value, P = +document.getElementById("P").value, p;
+    if (T < 0.01) p = ALL.map(function (x, i) { return i === 0 ? 1 : 0; });
+    else { var z = ALL.map(function (x) { return Math.pow(x[1], 1 / T); }), s = z.reduce(function (a, b) { return a + b; }); p = z.map(function (v) { return v / s; }); }
+    var idx = p.map(function (_, i) { return i; }).sort(function (a, b) { return p[b] - p[a]; }), keep = {}, cum = 0;
+    idx.forEach(function (i, r) { if ((K && r >= K) || (P < 1 && cum >= P - 1e-9)) return; keep[i] = 1; cum += p[i]; });
+    var ks = 0; idx.forEach(function (i) { if (keep[i]) ks += p[i]; });
+    return { T:T, K:K, P:P, before:p, after:p.map(function (v, i) { return keep[i] ? v / ks : 0; }), keep:keep };
+  }
+  function draw() {
+    var r = probs();
+    document.getElementById("Tv").textContent = r.T.toFixed(2); document.getElementById("Kv").textContent = r.K || "不限"; document.getElementById("Pv").textContent = r.P < 1 ? r.P.toFixed(2) : "不限";
+    document.getElementById("bars").innerHTML = NAMED.slice(0, 12).map(function (x, i) {
+      var on = r.keep[i];
+      return '<div class="barrow' + (on ? "" : " out") + '"><span>' + x[0] + '</span><div><div class="bar" style="width:' + Math.min(100, r.after[i] * 200).toFixed(1) + '%"></div><div class="orig" style="width:' + (x[1] * 200).toFixed(1) + '%"></div></div><span class="v">' + (on ? r.after[i].toFixed(3) : "排除") + "（原 " + x[1].toFixed(2) + "）</span></div>";
+    }).join("");
+    var nKeep = Object.keys(r.keep).length, otherKeep = 0, otherP = 0;
+    for (var i = 12; i < ALL.length; i++) { if (r.keep[i]) otherKeep++; otherP += r.after[i]; }
+    document.getElementById("tail").innerHTML = "另外还有 " + (ALL.length - 12) + " 个低概率的字没有画出，合计概率 " + otherP.toFixed(3) + "。现在共有 <b>" + nKeep + "</b> 个候选字。" +
+      (r.T < 0.01 ? " T = 0：永远选概率最大的“不”，等于贪心搜索。" : r.T < 1 ? " T &lt; 1：分布变尖，高概率的字更高。" : r.T > 1 ? " T &gt; 1：分布被拉平，低概率的字也有机会。" : "");
+  }
+  function sample(p) { var x = Math.random(), c = 0; for (var i = 0; i < p.length; i++) { c += p[i]; if (x < c) return i; } return 0; }
+  document.getElementById("draw").onclick = function () {
+    var r = probs(); seq = [];
+    for (var k = 0; k < 20; k++) { var i = sample(r.after), w = i < NAMED.length ? NAMED[i][0] : "□"; seq.push(w); counts[w] = (counts[w] || 0) + 1; }
+    document.getElementById("gen").innerHTML = seq.map(function (w) { return "<span>味道" + w + "</span>"; }).join("");
+    var uniq = Object.keys(seq.reduce(function (o, w) { o[w] = 1; return o; }, {})).length;
+    document.getElementById("stat").innerHTML = "这 20 次一共出现了 <b>" + uniq + "</b> 种不同的字。" + (seq.indexOf("□") >= 0 ? "“□”表示抽到了没画出来的低概率字，在真实生成里它们往往就是“胡言乱语”的开始。" : "");
+  };
+  document.getElementById("clr").onclick = function () { counts = {}; document.getElementById("gen").innerHTML = ""; document.getElementById("stat").innerHTML = ""; };
+  ["T", "K", "P"].forEach(function (id) { document.getElementById(id).oninput = draw; });
+  document.querySelectorAll("[data-s]").forEach(function (b) { b.onclick = function () { var v = b.dataset.s.split(","); document.getElementById("T").value = v[0]; document.getElementById("K").value = v[1]; document.getElementById("P").value = v[2]; draw(); }; });
+  draw();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>

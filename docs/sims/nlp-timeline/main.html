@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NLP 发展时间线</title>
+<link rel="stylesheet" href="../common/sim.css">
+<style>
+  .eras { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:6px; }
+  @media (max-width:620px) { .eras { grid-template-columns:1fr 1fr; } }
+  .era { border:2px solid var(--line); border-radius:8px; padding:6px 8px; cursor:pointer; background:#fff; text-align:left; color:var(--ink); }
+  .era b { display:block; font-size:14px; } .era span { font-size:12px; color:var(--muted); }
+  .era.on { border-color:var(--c); background:var(--cbg); color:var(--ink); }
+  .axis { position:relative; height:54px; margin:14px 4px 4px; }
+  .axis .line { position:absolute; left:0; right:0; top:22px; height:4px; background:var(--line); border-radius:2px; }
+  .ev { position:absolute; top:14px; width:20px; height:20px; margin-left:-10px; border-radius:50%; border:3px solid #fff; cursor:pointer; box-shadow:0 0 0 1px var(--line); padding:0; }
+  .ev.on { transform:scale(1.35); box-shadow:0 0 0 2px var(--ink); }
+  .yr { position:absolute; top:38px; font-size:11px; color:var(--muted); margin-left:-14px; }
+  .card { border-left:4px solid var(--c); background:var(--cbg); padding:8px 10px; border-radius:4px; margin-top:8px; }
+  .card h2 { font-size:15px; margin:0 0 4px; }
+  .who { display:grid; grid-template-columns:5.5em 1fr; gap:2px 8px; font-size:13px; margin-top:6px; }
+  .who dt { color:var(--muted); } .who dd { margin:0; }
+  .demo { margin-top:8px; }
+  .out { margin-top:6px; padding:8px; background:#fafafa; border:1px dashed var(--line); border-radius:6px; font-size:13.5px; min-height:2.2em; }
+</style>
+</head>
+<body>
+<h1>NLP 发展时间线：四个时代，四种思路</h1>
+<div class="sub">点上面的时代卡片，或者点时间轴上的圆点查看大事件。每个时代下方都有一个“小实验”，用同一个问题体验不同思路。</div>
+
+<div class="eras" id="eras"></div>
+<div class="axis" id="axis"><div class="line"></div></div>
+<div class="card" id="evcard"></div>
+<div class="card" id="eracard"></div>
+
+<script>
+(function () {
+  var ERAS = [
+    { name:"规则方法", years:"1950s–1980s", c:"#8e24aa", bg:"#f3e5f5",
+      idea:"语言学家把语法规则一条条写下来，交给计算机执行。",
+      human:"写规则、写模板", machine:"照着规则执行", good:"结果可控、可解释、不需要训练数据", bad:"例外太多，规则写不完，还会互相打架",
+      demo:"rule" },
+    { name:"统计方法", years:"1990s–2000s", c:"#1e88e5", bg:"#e3f2fd",
+      idea:"不再手写规则，而是从大量真实文本中统计规律。",
+      human:"准备语料、设计特征（看哪些词）", machine:"统计概率、学习特征的权重", good:"能从数据中学习，覆盖面比规则广", bad:"特征要人来设计，只能看很短的上下文",
+      demo:"ngram" },
+    { name:"深度学习", years:"2010s", c:"#43a047", bg:"#e8f5e9",
+      idea:"让神经网络从原始文本中自己学习特征。",
+      human:"准备大量标注数据", machine:"自己学出有用的特征", good:"不用人工设计特征，数据越多效果越好", bad:"每个任务要单独训练一个模型，需要算力，较难解释",
+      demo:"dl" },
+    { name:"大模型", years:"2020s", c:"#ef6c00", bg:"#fff3e0",
+      idea:"一个通用模型，用自然语言下指令就能完成各种任务。",
+      human:"写提示词，必要时给几个例子", machine:"理解指令，直接完成任务", good:"通用、会听指令、能举一反三", bad:"成本较高，可能一本正经地胡说（幻觉）",
+      demo:"llm" }
+  ];
+  var EVENTS = [
+    { y:1950, era:0, t:"图灵测试", d:"图灵提出：如果人和机器“隔墙对话”分辨不出对方是机器，就可以说机器有了智能。" },
+    { y:1954, era:0, t:"乔治城-IBM 机器翻译实验", d:"计算机用几条规则和 250 个词，把 60 多句俄语翻译成英语，让人们对机器翻译充满期待。" },
+    { y:1966, era:0, t:"ELIZA 聊天程序", d:"扮演心理咨询师，靠“关键词 + 模板”回复。看起来像在聊天，其实一点也不“懂”。" },
+    { y:1980, era:0, t:"GB 2312 发布", d:"收录 6763 个常用汉字，计算机第一次能统一地存储和显示汉字（中文信息处理的起点）。" },
+    { y:1993, era:1, t:"统计机器翻译", d:"从大量双语对照文本中统计“哪个词常被翻成哪个词”，不再手写翻译规则。" },
+    { y:1998, era:1, t:"搜索引擎兴起", d:"统计词频和链接关系来给网页排序，NLP 技术走进千家万户。" },
+    { y:2013, era:2, t:"Word2Vec 词向量", d:"让每个词都有一个“坐标”，意思相近的词坐标也相近（第 5 章）。" },
+    { y:2017, era:2, t:"Transformer", d:"注意力机制让模型同时关注句子中所有相关的词，成为此后几乎所有大模型的基础（第 9 章）。" },
+    { y:2018, era:2, t:"BERT 与 GPT", d:"“先在海量文本上预训练，再针对具体任务微调”成为主流做法。" },
+    { y:2020, era:3, t:"GPT-3", d:"模型足够大、数据足够多时，“涌现”出很多新能力：用自然语言描述任务就能完成。" },
+    { y:2022, era:3, t:"ChatGPT", d:"2022 年 11 月上线，两个月用户破亿，NLP 正式进入大语言模型时代。" },
+    { y:2023, era:3, t:"国产大模型百花齐放", d:"文心一言、通义千问、智谱 GLM、Kimi、豆包等陆续发布。" },
+    { y:2025, era:3, t:"DeepSeek-R1", d:"开源推理模型，以较低的训练成本达到国际一流水平，引起全球关注。" }
+  ];
+  var Y0 = 1945, Y1 = 2030, curEra = 0, curEv = 2;
+  var erasEl = document.getElementById("eras"), axis = document.getElementById("axis");
+
+  ERAS.forEach(function (e, i) {
+    var b = document.createElement("button"); b.className = "era";
+    b.style.setProperty("--c", e.c); b.style.setProperty("--cbg", e.bg);
+    b.innerHTML = "<b>" + e.name + "</b><span>" + e.years + "</span>";
+    b.onclick = function () { curEra = i; curEv = EVENTS.findIndex(function (v) { return v.era === i; }); draw(); };
+    erasEl.appendChild(b);
+  });
+  EVENTS.forEach(function (v, i) {
+    var x = (v.y - Y0) / (Y1 - Y0) * 100, b = document.createElement("button");
+    b.className = "ev"; b.style.left = x + "%"; b.style.background = ERAS[v.era].c; b.title = v.y + " " + v.t;
+    b.setAttribute("aria-label", v.y + "年 " + v.t);
+    b.onclick = function () { curEv = i; curEra = v.era; draw(); };
+    axis.appendChild(b);
+  });
+  [1950, 1970, 1990, 2010, 2025].forEach(function (y) {
+    var s = document.createElement("span"); s.className = "yr"; s.textContent = y;
+    s.style.left = (y - Y0) / (Y1 - Y0) * 100 + "%"; axis.appendChild(s);
+  });
+
+  // 每个时代的小实验：判断“我一点也不难过”是正面还是负面情绪
+  var DEMO = {
+    rule: { q:"规则：看到“难过”就判为负面。", run:function (s) { return /难过|伤心|生气/.test(s) ? "负面（规则只认关键词）" : "没有命中规则 → 不知道"; } },
+    ngram: { q:"统计：在标注好的句子里，数一数每个词在正面句、负面句中各出现几次，再相加。", run:function (s) {
+      var T = { "不":[3,5], "难过":[0,9], "开心":[9,0], "一点":[2,1], "也":[3,3], "很":[4,4], "好":[8,1], "今天":[3,3] }, p = 0, n = 0, used = [];
+      Object.keys(T).forEach(function (w) { if (s.indexOf(w) >= 0) { p += T[w][0]; n += T[w][1]; used.push(w + "(正" + T[w][0] + "/负" + T[w][1] + ")"); } });
+      return (used.length ? used.join(" + ") + " → " : "") + (p > n ? "正面" : p < n ? "负面" : "不确定") + "（只看单个词，读不出“一点也不”的否定）"; } },
+    dl: { q:"深度学习：用几万条标注好的句子训练一个情感分类模型，它自己学会了“不……”会翻转意思。", run:function (s) {
+      var neg = /不|没/.test(s), bad = /难过|伤心|生气|差/.test(s), good = /开心|好|高兴/.test(s);
+      var pos = bad ? neg : good ? !neg : null;
+      return pos === null ? "模型输出：中性" : "模型输出：" + (pos ? "正面" : "负面") + "（能处理否定，但只会做“情感分类”这一件事）"; } },
+    llm: { q:"大模型：直接用一句话下指令：“判断下面这句话的情绪，并说明理由。”", run:function (s) {
+      var neg = /不|没/.test(s), bad = /难过|伤心|生气|差/.test(s), good = /开心|好|高兴/.test(s);
+      var pos = bad ? neg : good ? !neg : null;
+      return pos === null ? "大模型：这句话没有明显的情绪倾向。" : "大模型：" + (pos ? "偏正面" : "偏负面") + "。" + (neg && bad ? "“一点也不难过”是对“难过”的否定，说话人想表达自己没事。" : "") + "（换个任务，比如“翻译成英文”，同一个模型也能做）"; } }
+  };
+
+  function draw() {
+    var e = ERAS[curEra], v = EVENTS[curEv];
+    erasEl.querySelectorAll(".era").forEach(function (b, i) { b.classList.toggle("on", i === curEra); });
+    axis.querySelectorAll(".ev").forEach(function (b, i) { b.classList.toggle("on", i === curEv); });
+    var ec = document.getElementById("evcard");
+    ec.style.setProperty("--c", ERAS[v.era].c); ec.style.setProperty("--cbg", "#fafafa");
+    ec.innerHTML = "<h2>" + v.y + " 年 · " + v.t + "</h2>" + v.d;
+    var c = document.getElementById("eracard");
+    c.style.setProperty("--c", e.c); c.style.setProperty("--cbg", e.bg);
+    var d = DEMO[e.demo];
+    c.innerHTML = "<h2>" + e.name + "时代（" + e.years + "）</h2>" + e.idea +
+      "<dl class='who'><dt>人要做什么</dt><dd>" + e.human + "</dd><dt>机器做什么</dt><dd>" + e.machine +
+      "</dd><dt>优点</dt><dd>" + e.good + "</dd><dt>局限</dt><dd>" + e.bad + "</dd></dl>" +
+      "<div class='demo'><b>小实验</b>：判断一句话的情绪。" + d.q +
+      "<div class='row'><input type='text' id='in' value='我一点也不难过'><button class='main' id='go'>试一试</button></div><div class='out' id='out'></div></div>";
+    function run() { document.getElementById("out").textContent = d.run(document.getElementById("in").value); }
+    document.getElementById("go").onclick = run; document.getElementById("in").oninput = run; run();
+  }
+  draw();
+})();
+</script>
+<script src="../common/sim.js"></script>
+</body>
+</html>
