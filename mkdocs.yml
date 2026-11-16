@@ -1,5 +1,8 @@
+# 站点名、描述、网址和 nav 由 python tools/course.py sync 根据 course.yml 生成，请改 course.yml，不要手改这几项
 site_name: 自然语言处理导论
-site_description: 面向成人教育人工智能技术应用专业专科学生的 NLP 入门教材，每章配套动手实验
+site_description: 面向成人教育人工智能技术应用专业（专科）的《自然语言处理导论》教材，12 章 36 个动手实验
+site_url: https://mingzifu9.github.io/nlp-textbook/
+repo_url: https://github.com/MingziFu9/nlp-textbook
 docs_dir: docs
 theme:
   name: material
@@ -27,10 +30,12 @@ markdown_extensions:
       permalink: true
 extra_css:
   - css/extra.css
+  - css/showcase.css
 extra_javascript:
   - javascripts/mathjax.js
   - javascripts/book.js
   - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+  - javascripts/showcase.js
 nav:
   - 首页: index.md
   - 课程描述: course-description.md
@@ -50,19 +55,19 @@ nav:
     - sims/index.md
     - "NLP 发展时间线": sims/nlp-timeline/index.md
     - "文本清洗流水线": sims/cleaning-pipeline/index.md
-    - "最大匹配分词": sims/max-match/index.md
     - "BPE 合并过程": sims/bpe-merge/index.md
+    - "最大匹配分词": sims/max-match/index.md
     - "依存句法树": sims/dependency-parser/index.md
     - "TF-IDF 计算器": sims/tfidf-calculator/index.md
     - "词向量与余弦相似度": sims/word-vectors/index.md
-    - "阈值与混淆矩阵": sims/threshold-confusion/index.md
     - "情感词典打分演示": sims/lexicon-scorer/index.md
+    - "阈值与混淆矩阵": sims/threshold-confusion/index.md
     - "BIO 标注练习": sims/bio-tagging/index.md
     - "神经元与激活函数": sims/neuron-activation/index.md
     - "RNN 逐步展开": sims/rnn-unroll/index.md
     - "自注意力热力图": sims/self-attention/index.md
-    - "BLEU 计算器": sims/bleu-calculator/index.md
     - "贪心与束搜索": sims/beam-search/index.md
+    - "BLEU 计算器": sims/bleu-calculator/index.md
     - "温度与 Top-p 采样": sims/temperature-sampling/index.md
     - "RAG 切块实验": sims/rag-chunking/index.md
     - "ReAct 执行回放": sims/react-replay/index.md
@@ -74,4 +79,4 @@ nav:
     - "附录 B NLP 工具库接口速查": appendix/b-libraries.md
     - "附录 C 实验环境、模型与数据说明": appendix/c-environment.md
     - "附录 D 国产大模型 API 申请与使用指南": appendix/d-llm-api.md
-    - "附录 E 术语表": appendix/e-glossary.md
+    - "附录 E 术语表": appendix/glossary.md

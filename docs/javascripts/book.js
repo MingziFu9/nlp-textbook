@@ -1,5 +1,6 @@
 // 教材页面交互：
-// 1. 章末练习题：点击选项即时判断对错，并自动展开紧跟其后的“答案与解析”；
+// 1. 章末练习题：单选、判断题点击选项即时判断对错；多选题（quiz-multi）选好后点“提交”；
+//    判断后自动展开紧跟其后的“答案与解析”；
 // 2. 术语链接：鼠标悬停时显示术语表中的定义；
 // 3. 交互动画：iframe 高度随内容自动调整。
 (function () {
@@ -36,25 +37,55 @@
     updateScore();
     quizzes[0].parentNode.insertBefore(score, quizzes[0].previousElementSibling || quizzes[0]);
 
+    function finish(q, ok, fb) {
+      q.classList.add("answered");
+      done += 1; if (ok) right += 1;
+      fb.textContent = ok ? "回答正确！" : "再想想，正确答案已标出，看看下面的解析。";
+      fb.className = "quiz-feedback " + (ok ? "ok" : "no");
+      var d = nextDetails(q);
+      if (d) d.open = true;
+      updateScore();
+    }
+
     quizzes.forEach(function (q) {
-      var answer = (q.dataset.answer || "").trim();
+      var answer = (q.dataset.answer || "").replace(/\s/g, "");
       var items = q.querySelectorAll("li");
+      var multi = q.classList.contains("quiz-multi");
       var fb = document.createElement("div");
       fb.className = "quiz-feedback";
       q.appendChild(fb);
+      if (multi) {
+        var btn = document.createElement("button");
+        btn.className = "quiz-submit";
+        btn.textContent = "提交答案";
+        q.insertBefore(btn, fb);
+        items.forEach(function (li) {
+          li.addEventListener("click", function () {
+            if (!q.classList.contains("answered")) li.classList.toggle("picked");
+          });
+        });
+        btn.addEventListener("click", function () {
+          if (q.classList.contains("answered")) return;
+          var picked = "";
+          items.forEach(function (x) { if (x.classList.contains("picked")) picked += letterOf(x); });
+          if (!picked) { fb.textContent = "请至少选一项。"; fb.className = "quiz-feedback no"; return; }
+          items.forEach(function (x) {
+            var inAns = answer.indexOf(letterOf(x)) >= 0;
+            if (inAns) x.classList.add("correct");
+            else if (x.classList.contains("picked")) x.classList.add("wrong");
+          });
+          btn.disabled = true;
+          finish(q, picked.split("").sort().join("") === answer.split("").sort().join(""), fb);
+        });
+        return;
+      }
       items.forEach(function (li) {
         li.addEventListener("click", function () {
           if (q.classList.contains("answered")) return;
-          q.classList.add("answered");
           var ok = letterOf(li) === answer;
           items.forEach(function (x) { if (letterOf(x) === answer) x.classList.add("correct"); });
           if (!ok) li.classList.add("wrong");
-          done += 1; if (ok) right += 1;
-          fb.textContent = ok ? "回答正确！" : "再想想，正确答案已标出，看看下面的解析。";
-          fb.className = "quiz-feedback " + (ok ? "ok" : "no");
-          var d = nextDetails(q);
-          if (d) d.open = true;
-          updateScore();
+          finish(q, ok, fb);
         });
       });
     });

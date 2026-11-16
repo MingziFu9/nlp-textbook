@@ -1,8 +1,9 @@
 """术语表锚点与正文术语链接工具。
 
 用法：
-    python tools/glossary_links.py anchors          # 给附录 E 每个术语加锚点（可重复运行）
+    python tools/glossary_links.py anchors          # 给附录 D 每个术语加锚点（可重复运行）
     python tools/glossary_links.py link 06          # 把第 6 章正文中本章术语的首次加粗出现改成术语链接
+    python tools/glossary_links.py concepts 06      # 按术语表重写第 6 章开头的“本章概念清单”
 
 术语链接的效果：虚线下划线，鼠标悬停显示定义，点击跳到术语表。
 """
@@ -11,7 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-GLOSSARY = ROOT / "docs/appendix/e-glossary.md"
+GLOSSARY = ROOT / "docs/appendix/glossary.md"
 CHAPTERS = ROOT / "docs/chapters"
 SPAN = re.compile(r'<span id="(g-[^"]+)"></span>')
 
@@ -64,7 +65,7 @@ def link_plain(parts, term, aid, definition):
                             lambda m: "\0" * len(m.group(0)), line)
             pos = masked.find(term)
             if pos >= 0:
-                link = f'[{term}](../../appendix/e-glossary.md#{aid} "{title}"){{ .term }}'
+                link = f'[{term}](../../appendix/glossary.md#{aid} "{title}"){{ .term }}'
                 lines[j] = line[:pos] + link + line[pos + len(term):]
                 parts[i] = "\n".join(lines)
                 return True
@@ -82,7 +83,7 @@ def link_bold(parts, name, aid, definition):
             continue
         if part[max(0, pos - 1):pos] != "[":
             title = definition.replace('"', "“")
-            link = f'[**{name}**](../../appendix/e-glossary.md#{aid} "{title}"){{ .term }}'
+            link = f'[**{name}**](../../appendix/glossary.md#{aid} "{title}"){{ .term }}'
             parts[i] = part[:pos] + link + part[pos + len(target):]
         return True
     return False
@@ -118,8 +119,28 @@ def link_chapter(num):
     print(f"已链接 {len(linked)} 个术语；正文中没有找到加粗形式的：{'、'.join(missing) or '无'}")
 
 
+def write_concepts(num):
+    """按术语表中本章的术语，重写章首“本章概念清单”折叠框（框不存在时插在“先修要求”之后）。"""
+    path = next(CHAPTERS.glob(f"{num:02d}-*/index.md"))
+    text = path.read_text(encoding="utf-8")
+    terms = parse().get(num, [])
+    block = [f'??? abstract "本章概念清单（{len(terms)} 个，点击查看定义和例子）"']
+    block += [f"    {i}. [{t}](../../appendix/glossary.md#{a})" for i, (t, a, _) in enumerate(terms, 1)]
+    block = "\n".join(block) + "\n"
+    m = re.search(r'\?\?\? abstract "本章概念清单.*?\n(?:    .*\n|\n(?=    ))*', text)
+    if m:
+        text = text[:m.start()] + block + text[m.end():]
+    else:
+        pos = text.index("## 情景导入")
+        text = text[:pos] + block + "\n" + text[pos:]
+    path.write_text(text, encoding="utf-8")
+    print(f"第 {num} 章概念清单：{len(terms)} 个术语")
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "anchors":
         add_anchors()
     elif sys.argv[1] == "link":
         link_chapter(int(sys.argv[2]))
+    elif sys.argv[1] == "concepts":
+        write_concepts(int(sys.argv[2]))

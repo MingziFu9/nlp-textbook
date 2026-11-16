@@ -55,3 +55,21 @@ a.term[data-def]:hover::after {
   font-size: .72rem; font-weight: normal; line-height: 1.5;
   white-space: normal; pointer-events: none;
 }
+
+/* ===== 多选题：先选、再提交 ===== */
+.quiz-multi li.picked { border-color: var(--md-accent-fg-color); background: var(--md-accent-fg-color--transparent); }
+.quiz-multi li.picked::before { content: "☑ "; }
+.quiz-submit {
+  margin: .3em 0; padding: .25em 1em; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--md-accent-fg-color); background: var(--md-accent-fg-color); color: #fff; font-size: .75rem;
+}
+.quiz-submit:disabled { opacity: .5; cursor: default; }
+
+/* ===== 证书考点提示框：!!! cert "证书考点 · 证书名（级别）" ===== */
+:root { --md-admonition-icon--cert: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2 9 8l-7 1 5 5-1 7 6-3 6 3-1-7 5-5-7-1z"/></svg>'); }
+.md-typeset .admonition.cert, .md-typeset details.cert { border-color: #8e24aa; }
+.md-typeset .cert > .admonition-title, .md-typeset .cert > summary { background-color: rgba(142, 36, 170, .1); }
+.md-typeset .cert > .admonition-title::before, .md-typeset .cert > summary::before {
+  background-color: #8e24aa; -webkit-mask-image: var(--md-admonition-icon--cert); mask-image: var(--md-admonition-icon--cert);
+}
+

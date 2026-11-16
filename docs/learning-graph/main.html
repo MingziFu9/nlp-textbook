@@ -59,7 +59,7 @@
   document.querySelectorAll("#legend span").forEach(function (s) { s.onclick = function () { var i = +s.dataset.c; hidden[i] = !hidden[i]; s.classList.toggle("off", hidden[i]); render(); }; });
 
   var lanes = document.getElementById("lanes");
-  for (var ch = 1; ch <= 12; ch++) {
+  for (var ch = 1; ch < CHAPTERS.length; ch++) {
     var ns = NODES.filter(function (n) { return n.ch === ch; }).sort(function (a, b) { return depth[a.id] - depth[b.id]; });
     var d = document.createElement("div"); d.className = "lane";
     d.innerHTML = '<div class="h"><b>第 ' + ch + " 章</b>" + CHAPTERS[ch] + '</div><div class="chips">' + ns.map(function (n) {
@@ -69,7 +69,7 @@
   }
   var chips = {}; document.querySelectorAll(".chip").forEach(function (c) { chips[c.dataset.id] = c; c.onclick = function () { sel = sel === c.dataset.id ? null : c.dataset.id; render(); }; });
 
-  function link(n) { return '<a href="../appendix/e-glossary/index.html#' + n.a + '" target="_top">术语表</a> · <a href="../chapters/' + CHDIRS[n.ch] + '/index.html" target="_top">第 ' + n.ch + " 章</a>"; }
+  function link(n) { return '<a href="../appendix/glossary/index.html#' + n.a + '" target="_top">术语表</a> · <a href="../chapters/' + CHDIRS[n.ch] + '/index.html" target="_top">第 ' + n.ch + " 章</a>"; }
   function seq(set, cls) {
     var ids = Object.keys(set).sort(function (a, b) { return byId[a].ch - byId[b].ch || depth[a] - depth[b]; }), out = "", last = 0;
     ids.forEach(function (id) { var c = byId[id].ch; if (c !== last) { out += "<i>第 " + c + " 章</i>"; last = c; } out += '<span class="' + cls + '" data-go="' + id + '">' + id + "</span>"; });

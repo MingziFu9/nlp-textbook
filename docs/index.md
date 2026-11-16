@@ -2,8 +2,28 @@
 
 **面向成人教育人工智能技术应用专业（专科）的自然语言处理入门教材**
 
+<!-- 书名、课程信息框和“目录与实验”表由 python tools/course.py sync 根据 course.yml 生成；全书概览表由 python tools/book_stats.py 生成 -->
+
+<!-- course:start -->
 !!! abstract "课程信息"
-    4 学分 · 72 学时（理论 60 学时 + 实验 12 学时）· 12 章 · 36 个实验
+    4 学分 · 72 学时（理论 60 学时 + 实验 12 学时） · 第 3 学期 · 12 章 · 36 个实验 · 期末开卷
+<!-- course:end -->
+
+<!-- showcase:start -->
+## 先玩一玩
+
+<p class="sc-tagline">从分词到大模型，亲手拆开 AI 读写文字的过程</p>
+
+<div class="showcase" aria-label="精选交互动画">
+<ol class="sc-list">
+<li data-sim="sims/self-attention/main.html" data-video="assets/showcase/self-attention" data-title="自注意力热力图" data-play="拖动权重，看“它”到底指小猫还是老鼠。"><img src="assets/showcase/self-attention.jpg" alt="自注意力热力图截图" loading="lazy"><p class="sc-hook">大模型读一句话时，每个字在“看”谁？</p><p><b>自注意力热力图</b>　拖动权重，看“它”到底指小猫还是老鼠。</p><p><a href="sims/self-attention/main.html">打开动画</a>　<a class="sc-chap" href="chapters/09-transformer/" title="第 9 章 Transformer 与预训练大模型">去读第9章 →</a></p></li>
+<li data-sim="sims/temperature-sampling/main.html" data-video="assets/showcase/temperature-sampling" data-title="温度与 Top-p 采样" data-play="调高温度，冷门的词也有机会被选中。"><img src="assets/showcase/temperature-sampling.jpg" alt="温度与 Top-p 采样截图" loading="lazy"><p class="sc-hook">同一个问题，为什么 AI 每次回答都不一样？</p><p><b>温度与 Top-p 采样</b>　调高温度，冷门的词也有机会被选中。</p><p><a href="sims/temperature-sampling/main.html">打开动画</a>　<a class="sc-chap" href="chapters/10-generation/" title="第 10 章 机器翻译与文本生成">去读第10章 →</a></p></li>
+<li data-sim="sims/word-vectors/main.html" data-video="assets/showcase/word-vectors" data-title="词向量与余弦相似度" data-play="在词语地图上找一找，意思相近的词住得近。"><img src="assets/showcase/word-vectors.jpg" alt="词向量与余弦相似度截图" loading="lazy"><p class="sc-hook">国王 − 男人 + 女人 = ？让词语变成坐标</p><p><b>词向量与余弦相似度</b>　在词语地图上找一找，意思相近的词住得近。</p><p><a href="sims/word-vectors/main.html">打开动画</a>　<a class="sc-chap" href="chapters/05-representation/" title="第 5 章 文本表示：从词袋到文本嵌入">去读第5章 →</a></p></li>
+<li data-sim="sims/rag-chunking/main.html" data-video="assets/showcase/rag-chunking" data-title="RAG 切块实验" data-play="换一种切法，8 道题的命中数马上变。"><img src="assets/showcase/rag-chunking.jpg" alt="RAG 切块实验截图" loading="lazy"><p class="sc-hook">让大模型先翻资料再回答，资料切多大最准？</p><p><b>RAG 切块实验</b>　换一种切法，8 道题的命中数马上变。</p><p><a href="sims/rag-chunking/main.html">打开动画</a>　<a class="sc-chap" href="chapters/11-qa-rag-agent/" title="第 11 章 问答系统、RAG 与智能体">去读第11章 →</a></p></li>
+<li data-sim="sims/react-replay/main.html" data-video="assets/showcase/react-replay" data-title="ReAct 执行回放" data-play="每按一次“下一步”，多一轮思考和工具调用。"><img src="assets/showcase/react-replay.jpg" alt="ReAct 执行回放截图" loading="lazy"><p class="sc-hook">看智能体一步步思考、查资料、得出答案</p><p><b>ReAct 执行回放</b>　每按一次“下一步”，多一轮思考和工具调用。</p><p><a href="sims/react-replay/main.html">打开动画</a>　<a class="sc-chap" href="chapters/11-qa-rag-agent/" title="第 11 章 问答系统、RAG 与智能体">去读第11章 →</a></p></li>
+</ol>
+</div>
+<!-- showcase:end -->
 
 ## 这本书讲什么
 
@@ -39,12 +59,13 @@
 | [第 12 章](chapters/12-ethics/index.md) | 1.3 万 | 3 | 22（15） | 16 | 12 | 1 |
 | **合计** | **14.3 万** | **36** | **281（180）** | **236** | **127** | **19** |
 
-正文字数只统计汉字，不含代码和课后练习；选择题和判断题可以在网页上直接作答。配套学习资源：[交互动画](sims/index.md) 19 个 · [学习图谱](learning-graph/index.md) 176 个概念 · [常见问题](faq/index.md) 55 问 · [术语表](appendix/e-glossary.md) 236 条。
+正文字数只统计汉字，不含代码和课后练习；单选、多选和判断题可以在网页上直接作答。配套学习资源：[交互动画](sims/index.md) 19 个 · [学习图谱](learning-graph/index.md) 176 个概念 · [常见问题](faq/index.md) 55 问 · [术语表](appendix/glossary.md) 236 条。
 
 <!-- stats:end -->
 
 ## 目录与实验
 
+<!-- toc:start -->
 | 章节 | 实验 |
 |---|---|
 | [第 1 章 自然语言处理概述](chapters/01-intro/index.md) | 实验 1-1 ★ 搭建 NLP 实验环境<br>实验 1-2 ★ 三大工具库初体验<br>实验 1-3 ☆ 国产大模型横向测评 |
@@ -60,7 +81,8 @@
 | [第 11 章 问答系统、RAG 与智能体](chapters/11-qa-rag-agent/index.md) | 实验 11-1 ★ 大模型 API 调用与提示工程<br>实验 11-2 ★ 从零搭建“学生手册问答”RAG 系统<br>实验 11-3 ☆ 用低代码平台搭建校园智能体 |
 | [第 12 章 NLP 的伦理、安全与法律](chapters/12-ethics/index.md) | 实验 12-1 ★ 个人信息识别与脱敏工具<br>实验 12-2 ★ 发现并缓解情感分类模型中的性别偏见<br>实验 12-3 ★ 提示注入攻击与防御 |
 
-附录：[A Python 速查](appendix/a-python.md) · [B NLP 工具库接口速查](appendix/b-libraries.md) · [C 实验环境、模型与数据说明](appendix/c-environment.md) · [D 国产大模型 API 申请与使用指南](appendix/d-llm-api.md) · [E 术语表](appendix/e-glossary.md)
+附录：[A Python 速查](appendix/a-python.md) · [B NLP 工具库接口速查](appendix/b-libraries.md) · [C 实验环境、模型与数据说明](appendix/c-environment.md) · [D 国产大模型 API 申请与使用指南](appendix/d-llm-api.md) · [E 术语表](appendix/glossary.md)
+<!-- toc:end -->
 
 ## 怎样使用本书
 

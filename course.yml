@@ -1,0 +1,115 @@
+# ============================================================
+# 课程配置：全书唯一需要手改的配置文件
+# 改完后运行  python tools/course.py sync  ，会自动更新：
+#   mkdocs.yml 的站点名和导航、首页课程信息与目录、缺少的章节骨架、
+#   实验目录、术语表的章节小节、学习图谱的章节列表、附录编号、首页轮播
+# 课件（tools/make_slides.py）、教案（tools/make_lesson_plan.py）、Word/PDF 版（tools/export_docx.py）
+# 也从这里读取课程名、学时等信息
+# ============================================================
+
+title: 自然语言处理导论
+description: 面向成人教育人工智能技术应用专业（专科）的《自然语言处理导论》教材，12 章 36 个动手实验
+audience: 成人教育（继续教育）人工智能技术应用专业专科学生，多为在职学习者
+github_user: MingziFu9                # 网址 https://<github_user>.github.io/<repo>/
+repo: nlp-textbook                    # GitHub 仓库名
+
+credits: 4                            # 学分
+hours: {theory: 60, lab: 12}          # 学时：理论 + 实验
+semester: 3                           # 开课学期
+exam: 开卷                            # 期末考核方式
+labs_per_chapter: 3                   # 每章实验数；0 表示没有实验
+lab_section: 本章实验                 # 实验部分的二级标题
+lab_word: 实验                        # 每个实验的三级标题前缀（### 实验 N-M）
+frontier_title: 前沿视窗              # 每章“前沿”小节的名称
+certificates: []                      # 对应的职业证书；没有证书时导航里不显示“证书考点对照”页
+
+# 章节：dir 是 docs/chapters/ 下的文件夹名（两位章号开头），short 用于学习图谱等窄处
+# theory / lab 是本章学时；labs 可单独覆盖本章实验数；offline 可指定本章线下学时（不写则按 online_ratio 分）
+chapters:
+  - {dir: 01-intro, title: "自然语言处理概述", short: "绪论", theory: 5, lab: 1}
+  - {dir: 02-preprocessing, title: "文本预处理", short: "文本预处理", theory: 5, lab: 1}
+  - {dir: 03-lexical, title: "词法分析：分词、词性与大模型分词器", short: "词法分析", theory: 5, lab: 1}
+  - {dir: 04-syntax, title: "句法分析与语义分析", short: "句法与语义分析", theory: 5, lab: 1}
+  - {dir: 05-representation, title: "文本表示：从词袋到文本嵌入", short: "文本表示", theory: 5, lab: 1}
+  - {dir: 06-classification, title: "文本分类与情感分析", short: "文本分类与情感分析", theory: 5, lab: 1}
+  - {dir: 07-ner, title: "命名实体识别与信息抽取", short: "信息抽取", theory: 5, lab: 1}
+  - {dir: 08-deep-learning, title: "深度学习基础：神经网络、RNN 与 LSTM", short: "深度学习基础", theory: 5, lab: 1}
+  - {dir: 09-transformer, title: "Transformer 与预训练大模型", short: "Transformer 与大模型", theory: 5, lab: 1}
+  - {dir: 10-generation, title: "机器翻译与文本生成", short: "机器翻译与文本生成", theory: 5, lab: 1}
+  - {dir: 11-qa-rag-agent, title: "问答系统、RAG 与智能体", short: "问答、RAG 与智能体", theory: 5, lab: 1}
+  - {dir: 12-ethics, title: "NLP 的伦理、安全与法律", short: "伦理、安全与法律", theory: 5, lab: 1}
+
+# 其他页面：追加在导航“常见问题”之后，如 extra_pages: [{file: mock-exam.md, title: 在线模拟卷}]
+extra_pages: []
+
+# 附录：docs/appendix/ 下的文件，按顺序自动编号为 A、B、C……（术语表固定为 glossary.md）
+appendices:
+  - {file: a-python.md, title: Python 速查}
+  - {file: b-libraries.md, title: NLP 工具库接口速查}
+  - {file: c-environment.md, title: 实验环境、模型与数据说明}
+  - {file: d-llm-api.md, title: 国产大模型 API 申请与使用指南}
+  - {file: glossary.md, title: 术语表}
+
+# 教案默认设置（每章可在 lesson-plans/chNN.yml 里覆盖）
+lesson_plan:
+  online_ratio: 0.5                   # 线上学时占比（开放大学以线上为主，按实际改）
+  teacher: ""                         # 授课教师，留空则教案上留出填写位置
+  school: ""                          # 学校名称，留空则不显示
+
+# 首页“先玩一玩”轮播：按轮播顺序写，第 1 个放画面最震撼的。sim 是 docs/sims/ 下的目录名，hook 是一句问句，play 是一句玩法；
+# steps 是录短视频时自动做的操作（写法见 编写规范.md“首页轮播”）。改完运行 python tools/showcase.py record 重录视频。
+showcase_tagline: "从分词到大模型，亲手拆开 AI 读写文字的过程"
+showcase:
+  - sim: self-attention
+    hook: "大模型读一句话时，每个字在“看”谁？"
+    play: "拖动权重，看“它”到底指小猫还是老鼠。"
+    steps:
+      - ["slide", "#amp", 6, {"sec": 1.4, "hold": 1}]
+      - ["poster"]
+      - ["slide", "input[type=range] >> nth=1", 0, {"hold": 0.6}]
+      - ["slide", "input[type=range] >> nth=2", 1, {"hold": 1}]
+      - ["click", "还原", {"hold": 0.8}]
+  - sim: temperature-sampling
+    hook: "同一个问题，为什么 AI 每次回答都不一样？"
+    play: "调高温度，冷门的词也有机会被选中。"
+    steps:
+      - ["click", "抽 20 次", {"hold": 1}]
+      - ["click", "T = 0（贪心）", {"hold": 0.4}]
+      - ["click", "抽 20 次", {"hold": 1}]
+      - ["click", "写作：T = 0.9，Top-p = 0.9", {"hold": 0.4}]
+      - ["click", "抽 20 次", {"hold": 1}]
+      - ["poster"]
+      - ["slide", "#T", 1.8, {"hold": 0.3}]
+      - ["click", "抽 20 次", {"hold": 1.2}]
+  - sim: word-vectors
+    hook: "国王 − 男人 + 女人 = ？让词语变成坐标"
+    play: "在词语地图上找一找，意思相近的词住得近。"
+    steps:
+      - ["click", "方向相同、长短不同", {"hold": 0.9}]
+      - ["click", "互相垂直", {"hold": 0.9}]
+      - ["click", "方向相反", {"hold": 0.9}]
+      - ["click", "找近义词", {"hold": 1}]
+      - ["click", "类比：国王 − 男人 + 女人", {"hold": 1.2}]
+      - ["poster"]
+      - ["click", "找不合群：香蕉 苹果 橙子 键盘", {"hold": 1.2}]
+  - sim: rag-chunking
+    hook: "让大模型先翻资料再回答，资料切多大最准？"
+    play: "换一种切法，8 道题的命中数马上变。"
+    vw: 860
+    steps:
+      - ["click", "检索", {"hold": 1}]
+      - ["slide", "#size", 400, {"hold": 0.6}]
+      - ["click", "检索", {"hold": 1}]
+      - ["click", "按章节切块", {"hold": 0.6}]
+      - ["click", "挂科了怎么办？", {"hold": 0.4}]
+      - ["click", "检索", {"hold": 1.3}]
+      - ["poster"]
+      - ["scroll", 0]
+  - sim: react-replay
+    hook: "看智能体一步步思考、查资料、得出答案"
+    play: "每按一次“下一步”，多一轮思考和工具调用。"
+    vw: 820
+    steps:
+      - ["click", "下一步 ▶", {"n": 4, "gap": 0.8, "hold": 0.8}]
+      - ["poster"]
+      - ["click", "下一步 ▶", {"n": 3, "gap": 0.8, "hold": 1.2}]

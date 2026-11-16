@@ -4,3 +4,5 @@ __pycache__/
 *.model
 *.pt
 .ipynb_checkpoints/
+build/
+node_modules/
